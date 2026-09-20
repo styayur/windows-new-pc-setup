@@ -2,6 +2,8 @@
 
 Windows 11 新机配置示例，包含可执行 PowerShell 脚本和 DSC v3 YAML。
 
+在线说明：https://styayur.github.io/windows-new-pc-setup/
+
 ## 重要说明
 
 - 执行前请完整审查代码、软件许可和第三方来源。
@@ -18,6 +20,10 @@ Windows 11 新机配置示例，包含可执行 PowerShell 脚本和 DSC v3 YAML
 - `SetupNewPC.dsc.yaml.txt`：DSC 配置文本副本。
 - `使用说明_PS1与DSC.txt`：完整使用说明。
 - `使用说明_PS1与DSC.pdf`：同一使用说明的 PDF 版本。
+
+## 在线说明页
+
+- `index.html`：GitHub Pages 使用的详细说明、使用方法、自定义指南和故障排查页面。
 
 ## PowerShell 快速使用
 
