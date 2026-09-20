@@ -1,0 +1,368 @@
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+# 系统优化
+- type: Microsoft.WinGet/Package
+  name: HiBitUninstaller
+  properties:
+    id: HiBitSoftware.HiBitUninstaller
+    source: winget
+    useLatest: true
+  metadata:
+    description: 安装 HiBit Uninstaller
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: WinUtil
+  dependsOn:
+  - HiBitUninstaller
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $url = 'https://christitus.com/winutil'
+        Invoke-RestMethod $url | Invoke-Expression
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: 启动 WinUtil 进行系统优化
+
+# 基础软件
+- type: Microsoft.WinGet/Package
+  name: SevenZip
+  properties:
+    id: 7zip.7zip
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: ClashVergeRev
+  properties:
+    id: ClashVergeRev.ClashVergeRev
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Git
+  properties:
+    id: Git.Git
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: GitHubCLI
+  properties:
+    id: GitHub.cli
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Chrome
+  properties:
+    id: Google.Chrome
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Listary
+  properties:
+    id: Bopsoft.Listary
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: VSCode
+  properties:
+    id: Microsoft.VisualStudioCode
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: RStudio
+  properties:
+    id: Posit.RStudio
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: R
+  properties:
+    id: RProject.R
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Steam
+  properties:
+    id: Valve.Steam
+    source: winget
+    useLatest: true
+
+# 开发基础
+- type: Microsoft.WinGet/Package
+  name: Python313
+  properties:
+    id: Python.Python.3.13
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: NodeJS
+  properties:
+    id: OpenJS.NodeJS
+    source: winget
+    useLatest: true
+
+# 常用工具
+- type: Microsoft.WinGet/Package
+  name: CCSwitch
+  properties:
+    id: farion1231.CC-Switch
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Logseq
+  properties:
+    id: Logseq.Logseq
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Notepad3
+  properties:
+    id: Rizonesoft.Notepad3
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: PixPin
+  properties:
+    id: PixPin.PixPin
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: PotPlayer
+  properties:
+    id: Daum.PotPlayer
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Thorium
+  properties:
+    id: Alex313031.Thorium
+    source: winget
+    useLatest: true
+
+# AI 工具
+- type: Microsoft.WinGet/Package
+  name: ChatGPT
+  properties:
+    id: 9PLM9XGG6VKS
+    source: msstore
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: CodexCLI
+  properties:
+    id: OpenAI.Codex
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Claude
+  properties:
+    id: Anthropic.Claude
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Cursor
+  properties:
+    id: Anysphere.Cursor
+    source: winget
+    useLatest: true
+
+# 工程环境
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: WSL
+  properties:
+    executable: C:\Windows\System32\wsl.exe
+    arguments:
+      "0": --install
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: 安装 WSL2 与默认 Ubuntu
+
+- type: Microsoft.WinGet/Package
+  name: Docker
+  dependsOn:
+  - WSL
+  properties:
+    id: Docker.DockerDesktop
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: GitLFS
+  dependsOn:
+  - Git
+  properties:
+    executable: C:\Program Files\Git\cmd\git.exe
+    arguments:
+      "0": lfs
+      "1": install
+      treatAsArray: true
+  metadata:
+    description: 初始化 Git LFS
+
+- type: Microsoft.WinGet/Package
+  name: Anaconda
+  properties:
+    id: Anaconda.Anaconda3
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Postman
+  properties:
+    id: Postman.Postman
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: DBeaver
+  properties:
+    id: DBeaver.DBeaver.Community
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: KiCad
+  properties:
+    id: KiCad.KiCad
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: FreeCAD
+  properties:
+    id: FreeCAD.FreeCAD
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: MobaXterm
+  properties:
+    id: Mobatek.MobaXterm
+    source: winget
+    useLatest: true
+
+# 语言环境
+- type: Microsoft.WinGet/Package
+  name: OpenJDK21
+  properties:
+    id: Microsoft.OpenJDK.21
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: JavaHome
+  dependsOn:
+  - OpenJDK21
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $java = Get-Command java.exe -ErrorAction SilentlyContinue
+        if (-not $java) { throw 'java.exe not found' }
+        $jdkHome = Split-Path (Split-Path $java.Source -Parent) -Parent
+        [Environment]::SetEnvironmentVariable('JAVA_HOME', $jdkHome, 'Machine')
+        $path = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+        if ($path -notlike "*$jdkHome\bin*") {
+          [Environment]::SetEnvironmentVariable('Path', "$path;$jdkHome\bin", 'Machine')
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: 配置 JAVA_HOME
+
+- type: Microsoft.WinGet/Package
+  name: Go
+  properties:
+    id: GoLang.Go
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: GoPath
+  dependsOn:
+  - Go
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $go = 'C:\Program Files\Go\bin\go.exe'
+        if (Test-Path $go) { & $go env -w "GOPATH=$env:USERPROFILE\go" }
+      treatAsArray: true
+  metadata:
+    description: 配置 Go 工作目录
+
+- type: Microsoft.WinGet/Package
+  name: Rustup
+  properties:
+    id: Rustlang.Rustup
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: RustStable
+  dependsOn:
+  - Rustup
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $rustup = Join-Path $env:USERPROFILE '.cargo\bin\rustup.exe'
+        if (Test-Path $rustup) { & $rustup default stable }
+      treatAsArray: true
+  metadata:
+    description: 安装 Rust stable 工具链
+
+- type: Microsoft.WinGet/Package
+  name: MinGW
+  properties:
+    id: BrechtSanders.WinLibs.POSIX.UCRT
+    source: winget
+    useLatest: true
+
+# 商业软件需手动安装
+# MATLAB 与 Simulink
+# AutoCAD 与 SolidWorks
+# Ansys 与 Keil
+# STM32CubeIDE 与 Vivado

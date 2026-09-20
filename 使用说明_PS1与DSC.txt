@@ -1,0 +1,238 @@
+Windows 新机配置脚本与 DSC 使用说明
+
+一、交付文件
+1. SetupNewPC_Optimized.ps1：可直接运行的 PowerShell 脚本。
+2. SetupNewPC_Optimized.ps1.txt：PS1 代码文本副本。
+3. SetupNewPC.dsc.yaml：WinGet/DSC v3 配置。
+4. SetupNewPC.dsc.yaml.txt：DSC 配置文本副本。
+5. 使用说明_PS1与DSC.txt：本说明。
+6. 使用说明_PS1与DSC.pdf：本说明的 PDF 版本。
+
+PS1 与 DSC 二选一执行，不要同时运行。
+若已执行某一个，另一个仍可用于补装或校验，但会重新执行脚本类资源。
+
+二、适用环境
+1. 推荐 Windows 11 22H2 或更高版本，x64 架构。
+2. 必须联网，并有管理员权限。
+3. 使用 Microsoft Store 源时必须能访问 Store。
+4. WSL2、Docker 可能要求启用虚拟化并重启。
+5. 商业软件不自动安装，只保留提示。
+
+三、执行前检查
+1. 打开“终端(管理员)”或“PowerShell(管理员)”。
+2. 检查 WinGet：
+
+winget --version
+
+3. 建议先更新 Windows 与 Microsoft Store，再运行配置。
+4. 建议在干净的虚拟机或新机先验证，不要直接用于生产机。
+5. 运行前审查 PS1、DSC YAML 以及所有第三方软件许可。
+
+四、PS1 脚本使用方法
+1. 将 SetupNewPC_Optimized.ps1 放到任意本地目录。
+2. 若只有 SetupNewPC_Optimized.ps1.txt，请复制内容并另存为 .ps1 文件。
+3. 在管理员 PowerShell 中进入该目录：
+
+Set-Location "$env:USERPROFILE\Downloads"
+
+4. 解除下载文件锁定，并仅对当前进程放行脚本：
+
+Unblock-File .\SetupNewPC_Optimized.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+5. 直接运行：
+
+.\SetupNewPC_Optimized.ps1
+
+6. 脚本会先检查管理员权限；权限不足时自动弹出 UAC。
+7. 执行过程中可能需要人工操作：
+   - 在 WinUtil 中完成系统优化后关闭窗口。
+   - Microsoft Store 应用可能要求登录。
+   - Docker Desktop 首次启动需要接受协议。
+   - WSL 安装后通常需要重启。
+
+五、PS1 可选参数
+1. 不运行 WinUtil：
+
+.\SetupNewPC_Optimized.ps1 -SkipWinUtil
+
+2. 不安装 WSL：
+
+.\SetupNewPC_Optimized.ps1 -SkipWSL
+
+3. 不安装 ChatGPT Microsoft Store 版：
+
+.\SetupNewPC_Optimized.ps1 -SkipStoreApps
+
+4. 无人值守时跳过结束暂停：
+
+.\SetupNewPC_Optimized.ps1 -NoPause
+
+5. 参数可以组合：
+
+.\SetupNewPC_Optimized.ps1 -SkipWinUtil -SkipWSL -SkipStoreApps -NoPause
+
+六、PS1 执行内容
+1. 安装 HiBit Uninstaller。
+2. 按需启动 WinUtil。
+3. 安装浏览器、Git、编辑器、R、Steam 等基础软件。
+4. 安装 Python 3.13、Node.js、CC Switch、Notepad3、PixPin、PotPlayer、Thorium。
+5. 安装 ChatGPT、Codex CLI、Claude、Cursor。
+6. 安装 WSL、Docker Desktop，并初始化 Git LFS。
+7. 安装 Anaconda、Postman、DBeaver、KiCad、FreeCAD、MobaXterm。
+8. 安装 OpenJDK 21、Go、Rustup、WinLibs MinGW。
+9. 自动定位 Java 路径并设置 JAVA_HOME 和系统 PATH。
+10. 执行版本验证并汇总失败项。
+
+七、PS1 日志与验证
+1. 日志位置：
+
+C:\ProgramData\SetupNewPC\setup.log
+
+2. 重启后打开新的 PowerShell，执行：
+
+python --version
+node --version
+java -version
+go version
+rustc --version
+gcc --version
+git lfs version
+
+3. 若某命令找不到，先重启，再检查系统 PATH。
+4. Java 可检查：
+
+$env:JAVA_HOME
+
+5. 脚本中的第三方包 ID 已在生成时通过 WinGet 元数据核对。
+
+八、DSC 配置文件说明
+SetupNewPC.dsc.yaml 使用 DSC v3 文档结构：
+1. $schema 指向 DSC v3 配置文档模式。
+2. metadata.winget.processor.identifier 为 dscv3。
+3. 软件包资源类型为 Microsoft.WinGet/Package。
+4. 交互或脚本步骤使用 Microsoft.DSC.Transitional/RunCommandOnSet。
+5. dependsOn 用于保证 Git、WSL、JDK 等前置顺序。
+6. useLatest: true 表示安装最新稳定版。
+7. 商业软件不列入自动安装资源。
+
+九、DSC 推荐用法：winget configure
+该方式由 WinGet 调用 DSC v3，适合新机直接使用。
+要求 WinGet 1.11 或更高版本。
+
+1. 打开管理员 PowerShell，进入 YAML 所在目录：
+
+Set-Location "E:\Docs\configwenjian"
+
+2. 检查版本：
+
+winget --version
+
+3. 先校验 YAML：
+
+winget configure validate -f .\SetupNewPC.dsc.yaml
+
+4. 查看解析结果：
+
+winget configure show -f .\SetupNewPC.dsc.yaml
+
+5. 测试当前状态：
+
+winget configure test -f .\SetupNewPC.dsc.yaml
+
+说明：RunCommandOnSet 类资源在 test 阶段通常会报告需要执行，这不等于 YAML 无效。
+
+6. 应用配置：
+
+winget configure -f .\SetupNewPC.dsc.yaml
+
+7. 若系统把扩展名限制为 .winget，可复制并改名：
+
+Copy-Item .\SetupNewPC.dsc.yaml .\SetupNewPC.dsc.winget
+winget configure validate -f .\SetupNewPC.dsc.winget
+winget configure -f .\SetupNewPC.dsc.winget
+
+8. 查看已应用记录：
+
+winget configure list
+
+9. 再次执行同一文件即可补装缺失软件；已安装软件通常会被识别并跳过。
+
+十、DSC 独立用法：dsc CLI
+1. 安装 DSC v3：
+
+winget install --id Microsoft.DSC -e --source winget --accept-source-agreements --accept-package-agreements
+
+2. 打开新的管理员 PowerShell，检查：
+
+dsc --version
+dsc resource list Microsoft.WinGet/Package
+dsc resource list Microsoft.DSC.Transitional/RunCommandOnSet
+
+3. 若 Microsoft.WinGet/Package 不存在，优先使用上面的 winget configure 路线，并更新 WinGet。
+
+4. 校验并测试：
+
+dsc config test --file .\SetupNewPC.dsc.yaml
+
+5. 应用：
+
+dsc config set --file .\SetupNewPC.dsc.yaml
+
+6. 单独查看文件解析：
+
+dsc config get --file .\SetupNewPC.dsc.yaml
+
+注意：dsc CLI 与 WinGet 版本、资源可用性有关；winget configure 的兼容性通常更好。
+
+十一、如何编辑 DSC YAML
+1. 每个资源从“- type:”开始，缩进固定为两个空格。
+2. 不要使用 Tab，不要改动同级键的对齐。
+3. name 必须唯一，dependsOn 必须引用已有 name。
+4. 删除 WinUtil：删除 name: WinUtil 的整个资源块。
+5. 删除 ChatGPT：删除 name: ChatGPT 的整个资源块。
+6. 删除 WSL：同时删除 Docker 的 dependsOn 和 WSL 资源。
+7. 删除 Git：同时删除 GitLFS，或移除其 dependsOn。
+8. 删除 OpenJDK：同时删除 JavaHome，或移除其 dependsOn。
+9. 固定版本时，将 useLatest: true 改为 version: 具体版本。
+10. 新增软件时，复制一个 Microsoft.WinGet/Package 块并替换 id 与 name。
+
+十二、常见问题
+1. winget 不可用：
+   - 更新“应用安装程序”(App Installer)。
+   - 新开终端后再次执行 winget --version。
+
+2. 找不到包：
+   - 执行 winget source update。
+   - 检查包 ID 是否仍存在。
+   - 本文件中的包 ID 已在生成时核对，但上游可能变更。
+
+3. Microsoft Store 安装失败：
+   - 登录 Store，检查区域与网络。
+   - 或使用 PS1 的 -SkipStoreApps，并删除 YAML 的 ChatGPT 资源。
+
+4. WSL 或 Docker 失败：
+   - 在 BIOS/UEFI 中启用 CPU 虚拟化。
+   - 以管理员身份执行 wsl --update。
+   - 重启后重新运行配置。
+
+5. Java 环境变量未生效：
+   - 重启或重新登录。
+   - 检查 $env:JAVA_HOME。
+   - 必要时重新执行 JavaHome 资源。
+
+6. 脚本中出现失败项：
+   - 查看 C:\ProgramData\SetupNewPC\setup.log。
+   - 修复网络、Store 或权限后再次运行。
+
+7. 不希望执行远程 WinUtil：
+   - PS1 使用 -SkipWinUtil。
+   - DSC 中删除 WinUtil 资源块。
+
+十三、安全与维护建议
+1. 不要在不了解内容时执行远程脚本。WinUtil 资源适合可信任环境。
+2. 把此配置放入版本管理，并在每次上游包变更后重新校验。
+3. 企业环境应先由管理员审查许可证、代理、证书和源策略。
+4. 不建议在域控制器、生产服务器或他人设备上运行。
+5. 关键数据先备份；重大版本升级前建立还原点或快照。
+6. 定期更新包 ID、DSC schema、WinGet 与 Microsoft.DSC。
