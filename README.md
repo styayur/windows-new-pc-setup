@@ -70,3 +70,9 @@ dsc config set --file .\SetupNewPC.dsc.yaml
 - WinUtil 资源适合可信任环境；可使用 PS1 的 `-SkipWinUtil`，或在 DSC 中删除对应资源。
 - 企业环境应先检查代理、证书、源策略和许可证。
 - 不要在域控制器、生产服务器或他人设备上直接运行。
+
+## 许可证
+
+本项目源代码和文档采用 MIT License，详见 [LICENSE](LICENSE)。
+
+配置中涉及的第三方软件、软件包和在线服务仍分别受其自身许可证约束。
