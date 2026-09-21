@@ -10,6 +10,15 @@ resources:
 # 1. Windows base
 # ---------------------------------------------------------------------------
 - type: Microsoft.WinGet/Package
+  name: ClashVergeRev
+  properties:
+    id: ClashVergeRev.ClashVergeRev
+    source: winget
+    useLatest: true
+  metadata:
+    description: Install Clash Verge Rev first.
+
+- type: Microsoft.WinGet/Package
   name: HiBitUninstaller
   properties:
     id: HiBitSoftware.HiBitUninstaller
@@ -29,12 +38,6 @@ resources:
     source: winget
     useLatest: true
 
-- type: Microsoft.WinGet/Package
-  name: ClashVergeRev
-  properties:
-    id: ClashVergeRev.ClashVergeRev
-    source: winget
-    useLatest: true
 
 - type: Microsoft.WinGet/Package
   name: Git

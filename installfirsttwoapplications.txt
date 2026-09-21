@@ -11,32 +11,53 @@ Profiles: Minimal / Developer / AI / Engineering / Full，可通过 -Profile 与
 
 一、Windows 基础
 
-1. 安装 HiBit Uninstaller
+0. 直接执行脚本（推荐）
 
-   winget install --id HiBitSoftware.HiBitUninstaller -e
+   Set-Location "E:\Docs\configwenjian"
+   Unblock-File .\SetupNewPC_Optimized.ps1
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+   .\SetupNewPC_Optimized.ps1 -Profile Developer
 
-2. 安装 PowerShell 7（后续如可用优先使用 pwsh）`r`n`r`n   winget install --id Microsoft.PowerShell -e`r`n`r`n3. 直接调用 WinUtil 的 Standard preset
+   主脚本会自动请求管理员权限；重启后会使用最高权限 Scheduled Task 续跑。
+   默认下载 WinUtil 到本地并执行 Standard preset，不需要再手动传 EnableWinUtil。
 
-   .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+   Clash Verge 是第一个软件安装项。
 
-   WinUtil 官方 Standard preset 会直接应用平衡型系统调整，不打开交互界面。
+1. WinUtil 默认 Standard preset
 
-3. 基础软件
+   .\SetupNewPC_Optimized.ps1 -Profile Developer
 
+   如需跳过：-SkipWinUtil
+
+   如需固定校验：-WinUtilSha256 <64-hex-hash>
+
+2. Clash Verge（第一个应用）
+
+   winget install --id ClashVergeRev.ClashVergeRev -e
+
+3. PowerShell 7 和基础软件
+
+   PowerShell 7:   winget install --id Microsoft.PowerShell -e
+   HiBit:          winget install --id HiBitSoftware.HiBitUninstaller -e
    7-Zip:          winget install --id 7zip.7zip -e
-   Clash Verge:    winget install --id ClashVergeRev.ClashVergeRev -e
    Git:            winget install --id Git.Git -e
    GitHub CLI:     winget install --id GitHub.cli -e
    Chrome:         winget install --id Google.Chrome -e
    Listary:        winget install --id Bopsoft.Listary -e
-   Steam:          winget install --id Valve.Steam -e
-   Logseq:         winget install --id Logseq.Logseq -e
    Notepad3:       winget install --id Rizonesoft.Notepad3 -e
    CC Switch:      winget install --id farion1231.CC-Switch -e
    PixPin:         winget install --id PixPin.PixPin -e
+   Steam:          winget install --id Valve.Steam -e
+   Logseq:         winget install --id Logseq.Logseq -e
    PotPlayer:      winget install --id Daum.PotPlayer -e
    Thorium:        winget install --id Alex313031.Thorium -e
 
+4. 逐项确认安装
+
+   Unblock-File .\Install-Applications.WithConfirmation.ps1
+   .\Install-Applications.WithConfirmation.ps1 -Profile Full
+
+   每个应用单独提示，只有输入 Y 才安装。
 4. 硬件与系统诊断
 
    LibreHardwareMonitor:

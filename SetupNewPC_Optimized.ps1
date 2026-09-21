@@ -15,11 +15,15 @@
     Add groups to the selected profile: Core, Developer, AI, Engineering, Personal.
 
 .PARAMETER EnableWinUtil
-    Explicit opt-in to download WinUtil locally and apply its Standard preset.
-    WinUtil is skipped by default. For unattended use, provide -WinUtilSha256.
+    Compatibility flag. WinUtil now runs by default unless -SkipWinUtil is used.
+    The script downloads it locally first and then applies the Standard preset.
 
 .PARAMETER WinUtilSha256
-    Expected SHA256 of the downloaded WinUtil script. A mismatch blocks execution.
+    Optional expected SHA256 of the downloaded WinUtil script. If supplied,
+    a mismatch blocks execution; otherwise the local SHA256 is recorded.
+
+.PARAMETER SkipWinUtil
+    Skip the default local WinUtil download and Standard preset execution.
 
 .PARAMETER DockerSmokeTest
     Run `docker run --rm hello-world` only when Docker is already usable.
@@ -31,7 +35,10 @@
     .\SetupNewPC_Optimized.ps1 -Profile AI -IncludePersonal -DockerSmokeTest
 
 .EXAMPLE
-    .\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+    .\SetupNewPC_Optimized.ps1 -Profile Full
+
+.EXAMPLE
+    .\SetupNewPC_Optimized.ps1 -Profile Developer -SkipWinUtil
 
 .EXAMPLE
     .\SetupNewPC_Optimized.ps1 -Stage WindowsBase -Profile Engineering
@@ -257,6 +264,7 @@ function Test-GroupSelected {
 
 function Get-SoftwareCatalog {
     return @(
+        [pscustomobject]@{ Key='ClashVerge'; Name='Clash Verge Rev'; Id='ClashVergeRev.ClashVergeRev'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
         [pscustomobject]@{ Key='PowerShell7'; Name='PowerShell 7'; Id='Microsoft.PowerShell'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
         [pscustomobject]@{ Key='HiBitUninstaller'; Name='HiBit Uninstaller'; Id='HiBitSoftware.HiBitUninstaller'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
         [pscustomobject]@{ Key='SevenZip'; Name='7-Zip'; Id='7zip.7zip'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
@@ -273,7 +281,6 @@ function Get-SoftwareCatalog {
         [pscustomobject]@{ Key='SysinternalsSuite'; Name='Sysinternals Suite'; Id='Microsoft.Sysinternals.Suite'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
         [pscustomobject]@{ Key='ProcessExplorer'; Name='Process Explorer'; Id='Microsoft.Sysinternals.ProcessExplorer'; Source='winget'; Stage='WindowsBase'; Category='Core'; Groups=@('Core') },
 
-        [pscustomobject]@{ Key='ClashVerge'; Name='Clash Verge Rev'; Id='ClashVergeRev.ClashVergeRev'; Source='winget'; Stage='WindowsBase'; Category='Personal'; Groups=@('Personal') },
         [pscustomobject]@{ Key='Steam'; Name='Steam'; Id='Valve.Steam'; Source='winget'; Stage='WindowsBase'; Category='Personal'; Groups=@('Personal') },
         [pscustomobject]@{ Key='Logseq'; Name='Logseq'; Id='Logseq.Logseq'; Source='winget'; Stage='WindowsBase'; Category='Personal'; Groups=@('Personal') },
         [pscustomobject]@{ Key='PotPlayer'; Name='PotPlayer'; Id='Daum.PotPlayer'; Source='winget'; Stage='WindowsBase'; Category='Personal'; Groups=@('Personal') },
@@ -889,9 +896,9 @@ function Install-SoftwareForStage {
 
 function Invoke-WinUtilStandardPreset {
     $itemKey = 'step:WinUtilStandardPreset'
-    if ($SkipWinUtil -or -not $EnableWinUtil) {
-        Set-ItemResult -Key $itemKey -Name 'WinUtil Standard preset' -Stage 'WindowsBase' -Category 'System' -Status 'Skipped' -Error 'Opt-in required; use -EnableWinUtil.' -Persist
-        Write-Host 'WinUtil 默认跳过。需要时显式使用 -EnableWinUtil，并提供 -WinUtilSha256。' -ForegroundColor DarkGray
+    if ($SkipWinUtil) {
+        Set-ItemResult -Key $itemKey -Name 'WinUtil Standard preset' -Stage 'WindowsBase' -Category 'System' -Status 'Skipped' -Error '-SkipWinUtil' -Persist
+        Write-Host '已使用 -SkipWinUtil，跳过 WinUtil。' -ForegroundColor DarkGray
         return
     }
 
@@ -918,13 +925,8 @@ function Invoke-WinUtilStandardPreset {
             if ($actualHash -ne $WinUtilSha256.ToLowerInvariant()) {
                 throw "WinUtil SHA256 mismatch. Expected $($WinUtilSha256.ToLowerInvariant()), got $actualHash"
             }
-        } elseif ($NoPause) {
-            throw 'Unverified WinUtil is blocked in -NoPause mode. Supply -WinUtilSha256.'
         } else {
-            $confirmation = Read-Host '未提供 WinUtilSha256。核验哈希后输入 RUN-WINUTIL 继续，其他输入取消'
-            if ($confirmation -ne 'RUN-WINUTIL') {
-                throw 'User declined unverified WinUtil execution.'
-            }
+            Write-Warning '未提供 -WinUtilSha256；已记录本次下载的本地 SHA256，并继续执行 Standard preset。'
         }
 
         $escapedPath = $winUtilPath.Replace("'", "''")
@@ -945,17 +947,12 @@ function Invoke-WinUtilStandardPreset {
 function Install-WindowsBase {
     Write-Host "`n========== [1/3] Windows 基础 ==========" -ForegroundColor Magenta
 
-    $winUtilHandled = $false
+    Write-Host '开始阶段：先准备并执行 WinUtil Standard preset。' -ForegroundColor Cyan
+    Invoke-WinUtilStandardPreset
+
     foreach ($item in @(Get-SoftwareForStage -StageName 'WindowsBase')) {
         Invoke-Winget -Id $item.Id -Name $item.Name -Source $item.Source -Stage $item.Stage -Category $item.Category | Out-Null
         Update-SessionPath
-        if ($item.Key -eq 'HiBitUninstaller' -and -not $winUtilHandled) {
-            Invoke-WinUtilStandardPreset
-            $winUtilHandled = $true
-        }
-    }
-    if (-not $winUtilHandled) {
-        Invoke-WinUtilStandardPreset
     }
 
     $wslNeeded = (Test-GroupSelected -Group 'Developer') -or (Test-GroupSelected -Group 'AI') -or (Test-GroupSelected -Group 'Engineering')
@@ -998,8 +995,9 @@ function Register-ResumeTask {
         $action = New-ScheduledTaskAction -Execute $hostExe -Argument ($argumentParts -join ' ')
         $trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
         $taskPrincipal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Highest
+        $taskSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 4)
 
-        Register-ScheduledTask -TaskName $script:ResumeTaskName -Action $action -Trigger $trigger -Principal $taskPrincipal -Force | Out-Null
+        Register-ScheduledTask -TaskName $script:ResumeTaskName -Action $action -Trigger $trigger -Principal $taskPrincipal -Settings $taskSettings -Description 'Resume SetupNewPC Development stage after the WSL/VMP reboot gate.' -Force | Out-Null
         Set-ItemResult -Key 'step:ResumeTask' -Name 'Reboot resume task' -Stage 'WindowsBase' -Category 'Recovery' -Status 'Succeeded' -Version $script:ResumeTaskName -Persist
         Write-Host "已登记重启后自动续跑任务：$script:ResumeTaskName" -ForegroundColor Green
     } catch {

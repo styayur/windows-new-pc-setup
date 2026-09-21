@@ -1,7 +1,22 @@
 ﻿# Windows New PC Setup
 
-Windows 11 新机配置示例，按“Windows 基础 -> 重启门 -> 开发环境”组织，
-包含可续跑的 PowerShell 脚本和两阶段 DSC v3 YAML。
+Windows 11 新机配置示例，按“Windows 基础 -> 重启门 -> 开发环境”组织。
+主脚本会先下载本地 WinUtil 并执行 Standard preset，然后从 Clash Verge 开始安装软件。
+
+## 直接执行
+
+```powershell
+Unblock-File .\SetupNewPC_Optimized.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\SetupNewPC_Optimized.ps1 -Profile Developer
+```
+
+逐项确认安装每个应用：
+
+```powershell
+Unblock-File .\Install-Applications.WithConfirmation.ps1
+.\Install-Applications.WithConfirmation.ps1 -Profile Full
+```
 
 在线说明：https://styayur.github.io/windows-new-pc-setup/
 
@@ -17,6 +32,7 @@ Windows 11 新机配置示例，按“Windows 基础 -> 重启门 -> 开发环�
 ## 文件
 
 - `SetupNewPC_Optimized.ps1`：主 PowerShell 装机脚本，支持 Profile、逐项状态、重试、Auto/WindowsBase/Development 阶段。
+- `Install-Applications.WithConfirmation.ps1`：逐应用确认安装脚本，每个软件必须单独输入 Y。
 - `SetupNewPC_Optimized.ps1.txt`：脚本代码文本副本。
 - `SetupNewPC.WinBase.dsc.yaml`：DSC 阶段 1，Windows 基础与 WSL/VMP 功能启用。
 - `SetupNewPC.WinBase.dsc.yaml.txt`：阶段 1 文本副本。
@@ -48,7 +64,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ```powershell
 .\SetupNewPC_Optimized.ps1 -Profile AI -IncludePersonal -DockerSmokeTest
 .\SetupNewPC_Optimized.ps1 -Profile Engineering -SkipCondaInit
-.\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+.\SetupNewPC_Optimized.ps1 -Profile Full
 .\SetupNewPC_Optimized.ps1 -Profile Developer -SkipWSL -NoPause
 ```
 
@@ -85,7 +101,7 @@ dsc config set --file .\SetupNewPC.Development.dsc.yaml
 ## 安全建议
 
 - 不要在不了解内容时执行远程脚本。
-- WinUtil 在 PS1 中默认跳过；只有 `-EnableWinUtil` 才下载到本地并校验 SHA256，随后才执行 Standard preset。
+- WinUtil 会先下载到本地并执行 Standard preset；`-SkipWinUtil` 可跳过，`-WinUtilSha256` 可用于固定哈希检查。
 - 企业环境应先检查代理、证书、源策略和许可证。
 - 不要在域控制器、生产服务器或他人设备上直接运行。
 

@@ -1,5 +1,27 @@
 ﻿Windows 新机配置脚本与 DSC 使用说明
 
+零、直接执行所需的代码（先看这里）
+
+管理员 PowerShell 中执行：
+
+Set-Location "E:\Docs\configwenjian"
+Unblock-File .\SetupNewPC_Optimized.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\SetupNewPC_Optimized.ps1 -Profile Developer
+
+AI 工作站：
+
+.\SetupNewPC_Optimized.ps1 -Profile AI -IncludePersonal -DockerSmokeTest
+
+工程科学工作站：
+
+.\SetupNewPC_Optimized.ps1 -Profile Engineering
+
+逐项确认安装脚本：
+
+Unblock-File .\Install-Applications.WithConfirmation.ps1
+.\Install-Applications.WithConfirmation.ps1 -Profile Full
+
 一、交付文件
 
 1. SetupNewPC_Optimized.ps1
@@ -27,6 +49,9 @@
 8. Setupnewpc.ps1
    兼容入口，会把参数转发给 SetupNewPC_Optimized.ps1。
 
+9. Install-Applications.WithConfirmation.ps1
+   逐项确认安装脚本。每个应用单独提示，只有输入 Y 才安装，支持 Profile 选择。
+
 PS1 与 DSC 二选一执行，不要混用。兼容入口和主脚本也算同一种 PS1 路线。
 
 
@@ -47,8 +72,8 @@ Windows 基础完成后检查待重启状态，必要时保存进度并停止。
 
 1. 执行 Windows 基础阶段。
 2. 安装 PowerShell 7、HiBit Uninstaller 和 Core 软件。
-3. 默认跳过 WinUtil。只有显式传入 -EnableWinUtil 时才会下载到本地、计算 SHA256，并在校验或人工确认后执行 Standard preset：
-   .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+3. 默认下载 WinUtil 到本地并执行 Standard preset。之后 Clash Verge 是第一个软件安装项：
+   .\SetupNewPC_Optimized.ps1 -Profile Developer
 4. 安装基础桌面软件、LibreHardwareMonitor、CrystalDiskInfo、
    CrystalDiskMark、Sysinternals Suite 和 Process Explorer。
 5. 深度检测虚拟化、WSL、VMP 和 Linux 子系统功能。
@@ -102,14 +127,13 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
    向任意 Profile 加入 Personal 软件，如 Steam、Thorium、PotPlayer。
 
 4. -EnableWinUtil
-   显式允许下载并执行 WinUtil Standard preset；默认不执行。
+   兼容参数。当前版本默认已经下载并执行 WinUtil Standard preset；不需要再传入。
 
 5. -WinUtilSha256
-   下载 WinUtil 后必须匹配的 64 位十六进制 SHA256。
-   在 -NoPause 无人值守模式中未提供该参数会直接失败。
+   可选的 64 位十六进制 SHA256。提供后要求下载文件必须匹配；不提供时仍会记录本地哈希并继续。
 
 6. -SkipWinUtil
-   即使同时传入 -EnableWinUtil，也强制跳过 WinUtil。
+   跳过默认的 WinUtil 下载和 Standard preset 执行。
 
 7. -SkipWSL
    跳过 WSL/VMP 功能启用、WSL 初始化和 Docker 依赖。
@@ -140,7 +164,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\SetupNewPC_Optimized.ps1 -Profile Developer
 .\SetupNewPC_Optimized.ps1 -Profile AI -IncludePersonal -DockerSmokeTest
 .\SetupNewPC_Optimized.ps1 -Profile Engineering -SkipCondaInit
-.\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+.\SetupNewPC_Optimized.ps1 -Profile Full
 
 六、重启门与续跑
 
@@ -323,7 +347,7 @@ procexp.exe
    - 检查网络能否访问 christitus.com 和 GitHub。
    - 检查管理员权限。
    - 使用 -SkipWinUtil 跳过，或手动执行：
-     .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+     .\SetupNewPC_Optimized.ps1 -Profile Developer
 
 5. 系统 python 被 conda 覆盖
    - 重新打开终端，检查 Get-Command python 的 Source。
@@ -339,6 +363,6 @@ procexp.exe
 
 1. 执行前审查 PS1、DSC YAML、第三方软件许可和下载来源。
 2. 建议在虚拟机或可恢复环境中先验证。
-3. WinUtil 默认跳过；只有显式启用、下载到本地并校验 SHA256 或人工确认后才会执行远程脚本。
+3. WinUtil 会先下载到本地并执行 Standard preset；如不希望执行，请使用 -SkipWinUtil。可选 -WinUtilSha256 用于固定检查。
 4. 企业环境应先检查代理、证书、源策略和许可证。
 5. 不要把此配置用于域控制器、生产服务器或他人设备。

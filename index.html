@@ -614,7 +614,7 @@
       <div class="hero-copy">
         <p class="kicker">Windows 11 · 基础 → 重启门 → 开发环境</p>
         <h1>先打好 Windows 基础，再让开发环境安全落地。</h1>
-        <p class="hero-lead">把 WSL、VMP、虚拟化与 Docker 的前置关系纳入装机流程。PS1 可保存状态并在重启后续跑；DSC 拆成 WindowsBase 与 Development 两阶段，避免在功能未生效时误装 Docker。</p>
+        <p class="hero-lead">默认下载本地 WinUtil 并执行 Standard preset，然后从 Clash Verge 开始安装。PS1 可保存状态并在重启后续跑；DSC 拆成 WindowsBase 与 Development 两阶段。</p>
         <div class="hero-actions">
           <a class="primary-button" href="#quickstart">开始使用</a>
           <a class="ghost-button" href="#customize">查看自定义方法</a>
@@ -639,7 +639,7 @@
           </li>
           <li class="pipeline-item">
             <span class="step-no">02</span>
-            <span><strong>Windows 基础</strong><small>PowerShell 7、HiBit、诊断工具；WinUtil opt-in</small></span>
+            <span><strong>Windows 基础</strong><small>WinUtil Standard、Clash Verge、PowerShell 7、诊断工具</small></span>
             <span class="state check">APPLY</span>
           </li>
           <li class="pipeline-item">
@@ -654,6 +654,31 @@
           </li>
         </ol>
       </aside>
+    </section>
+
+    <section class="doc-section" id="top-commands">
+      <div class="section-head">
+        <span class="section-index">00 / COMMANDS</span>
+        <div>
+          <h2>直接执行所需的代码</h2>
+          <p>需要输入的命令放在最前面。默认会下载本地 WinUtil 并执行 Standard preset，然后从 Clash Verge 开始安装。</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-head"><span>管理员 PowerShell</span><button class="copy-button" type="button">复制</button></div>
+        <pre><code>Set-Location "$env:USERPROFILE\Downloads"
+Unblock-File .\SetupNewPC_Optimized.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\SetupNewPC_Optimized.ps1 -Profile Developer
+
+# 逐应用确认安装
+Unblock-File .\Install-Applications.WithConfirmation.ps1
+.\Install-Applications.WithConfirmation.ps1 -Profile Full</code></pre>
+      </div>
+      <div class="callout">
+        <strong>跳过 WinUtil</strong>
+        使用 <code>-SkipWinUtil</code>。如需固定校验，可增加 <code>-WinUtilSha256 &lt;64-hex-hash&gt;</code>。
+      </div>
     </section>
 
     <section class="meaning" id="meaning">
@@ -798,8 +823,8 @@ winget configure -f .\SetupNewPC.Development.dsc.yaml</code></pre>
                 <tr><td><code>-Stage Auto</code></td><td>默认；按状态自动执行基础、重启门和开发环境</td><td>首次运行和重启后续跑</td></tr>
                 <tr><td><code>-Stage WindowsBase</code></td><td>只运行 Windows 基础与 WSL/VMP 功能启用</td><td>先完成系统基线，稍后重启</td></tr>
                 <tr><td><code>-Stage Development</code></td><td>只运行重启后的开发环境</td><td>手动控制第二阶段的执行时机</td></tr>
-                <tr><td><code>-EnableWinUtil</code> / <code>-WinUtilSha256</code></td><td>默认跳过 WinUtil；显式启用后才下载、校验并执行</td><td>接受并审查第三方远程脚本的可信任环境</td></tr>
-                <tr><td><code>-SkipWinUtil</code></td><td>即使同时传入 <code>-EnableWinUtil</code>，也强制跳过 WinUtil</td><td>不希望执行第三方在线脚本</td></tr>
+                <tr><td><code>-WinUtilSha256</code></td><td>可选的固定 SHA256 校验</td><td>需要锁定 WinUtil 下载内容</td></tr>
+                <tr><td><code>-SkipWinUtil</code></td><td>跳过默认的 WinUtil 下载与 Standard preset 执行</td><td>不希望执行第三方在线脚本</td></tr>
                 <tr><td><code>-SkipWSL</code></td><td>跳过 WSL/VMP、WSL 初始化及 Docker 前置依赖</td><td>不开发 Linux 环境，或暂时不能重启</td></tr>
                 <tr><td><code>-SkipDocker</code></td><td>保留 WSL 初始化，但不安装 Docker Desktop</td><td>暂不需要容器环境</td></tr>
                 <tr><td><code>-SkipCondaInit</code></td><td>保留 conda 检测，但不修改 PowerShell profile</td><td>不希望修改当前用户 profile</td></tr>
@@ -817,12 +842,12 @@ winget configure -f .\SetupNewPC.Development.dsc.yaml</code></pre>
             <div class="code-head"><span>Profile 组合示例</span><button class="copy-button" type="button">复制</button></div>
             <pre><code>.\SetupNewPC_Optimized.ps1 -Profile AI -DockerSmokeTest
 .\SetupNewPC_Optimized.ps1 -Profile Engineering -SkipCondaInit
-.\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash></code></pre>
+.\SetupNewPC_Optimized.ps1 -Profile Full</code></pre>
           </div>
 
           <h3>执行阶段</h3>
           <ol class="step-list">
-            <li><strong>Windows 基础：</strong>安装 PowerShell 7 与 Core 软件；WinUtil 默认跳过，仅显式启用并校验后执行 <code>-Preset Standard</code>。</li>
+            <li><strong>Windows 开始：</strong>下载本地 WinUtil 并执行 Standard preset；之后 Clash Verge 是第一个软件安装项。</li>
             <li>安装 7-Zip、Clash Verge、Git、GitHub CLI、Chrome、Listary、Steam、Logseq、Notepad3、CC Switch、PixPin、PotPlayer、Thorium。</li>
             <li>安装 LibreHardwareMonitor、CrystalDiskInfo、CrystalDiskMark、Sysinternals Suite 和独立 Process Explorer。</li>
             <li>启用 VirtualMachinePlatform 与 Microsoft-Windows-Subsystem-Linux，并深测固件虚拟化、VT-x/AMD-V、SLAT、HypervisorPresent。</li>
@@ -950,7 +975,7 @@ resources:
             <dt>DSC</dt>
             <dd>删除以 <code>- type:</code> 开始的整个软件块。若其他资源通过 <code>dependsOn</code> 引用它，必须同时删除或改写依赖。</dd>
             <dt>跳过 WinUtil</dt>
-            <dd>PS1 使用 <code>-SkipWinUtil</code>，或默认不传 <code>-EnableWinUtil</code>；DSC 默认不执行 WinUtil。</dd>
+            <dd>PS1 默认执行 WinUtil；使用 <code>-SkipWinUtil</code> 跳过。DSC 默认路径不执行 WinUtil。</dd>
             <dt>跳过 Store</dt>
             <dd>PS1 使用 <code>-SkipStoreApps</code>；DSC 删除 <code>name: ChatGPT</code> 的资源块。</dd>
           </dl>
@@ -1005,7 +1030,7 @@ git diff -- .\SetupNewPC.WinBase.dsc.yaml .\SetupNewPC.Development.dsc.yaml .\Se
 
           <div class="callout danger">
             <strong>远程脚本风险</strong>
-            WinUtil 默认不执行。PS1 只有在显式使用 <code>-EnableWinUtil</code> 时才下载到本地、计算 SHA256，并在哈希校验或人工确认后执行 Standard preset；DSC 默认路径不包含该远程脚本。
+            WinUtil 默认先下载到本地并执行 Standard preset；如不需要，使用 <code>-SkipWinUtil</code>。可选 <code>-WinUtilSha256</code> 固定校验；DSC 默认路径不包含该远程脚本。
           </div>
 
           <ul>
@@ -1106,6 +1131,12 @@ git push</code></pre>
             <div class="file-name">SetupNewPC_Optimized.ps1.txt</div>
             <div class="file-type">脚本文本副本</div>
             <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC_Optimized.ps1.txt">下载</a></div>
+            <div class="file-name">Install-Applications.WithConfirmation.ps1</div>
+            <div class="file-type">逐应用确认安装脚本</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/Install-Applications.WithConfirmation.ps1">下载</a></div>
+            <div class="file-name">Install-Applications.WithConfirmation.ps1.txt</div>
+            <div class="file-type">逐应用确认脚本文本副本</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/Install-Applications.WithConfirmation.ps1.txt">下载</a></div>
             <div class="file-name">SetupNewPC.WinBase.dsc.yaml</div>
             <div class="file-type">DSC 阶段 1：Windows 基础</div>
             <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.WinBase.dsc.yaml">下载</a></div>
