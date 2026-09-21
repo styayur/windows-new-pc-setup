@@ -1,0 +1,185 @@
+﻿Windows 11 新机安装参考：Windows 基础 -> 重启 -> 开发环境
+
+这是人工执行与脚本设计的同一份顺序参考。自动化版本请优先使用：
+
+  SetupNewPC_Optimized.ps1
+
+Profiles: Minimal / Developer / AI / Engineering / Full，可通过 -Profile 与 -IncludePersonal 选择。
+如果 WSL/VMP 功能需要重启，脚本会保存状态并登记续跑任务。重启并登录后，
+脚本自动从 Development 阶段继续；也可以手动再次运行同一脚本。
+
+
+一、Windows 基础
+
+1. 安装 HiBit Uninstaller
+
+   winget install --id HiBitSoftware.HiBitUninstaller -e
+
+2. 安装 PowerShell 7（后续如可用优先使用 pwsh）`r`n`r`n   winget install --id Microsoft.PowerShell -e`r`n`r`n3. 直接调用 WinUtil 的 Standard preset
+
+   .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+
+   WinUtil 官方 Standard preset 会直接应用平衡型系统调整，不打开交互界面。
+
+3. 基础软件
+
+   7-Zip:          winget install --id 7zip.7zip -e
+   Clash Verge:    winget install --id ClashVergeRev.ClashVergeRev -e
+   Git:            winget install --id Git.Git -e
+   GitHub CLI:     winget install --id GitHub.cli -e
+   Chrome:         winget install --id Google.Chrome -e
+   Listary:        winget install --id Bopsoft.Listary -e
+   Steam:          winget install --id Valve.Steam -e
+   Logseq:         winget install --id Logseq.Logseq -e
+   Notepad3:       winget install --id Rizonesoft.Notepad3 -e
+   CC Switch:      winget install --id farion1231.CC-Switch -e
+   PixPin:         winget install --id PixPin.PixPin -e
+   PotPlayer:      winget install --id Daum.PotPlayer -e
+   Thorium:        winget install --id Alex313031.Thorium -e
+
+4. 硬件与系统诊断
+
+   LibreHardwareMonitor:
+   winget install --id LibreHardwareMonitor.LibreHardwareMonitor -e
+
+   CrystalDiskInfo:
+   winget install --id CrystalDewWorld.CrystalDiskInfo -e
+
+   CrystalDiskMark:
+   winget install --id CrystalDewWorld.CrystalDiskMark -e
+
+   Sysinternals Suite（包含 Process Explorer）:
+   winget install --id Microsoft.Sysinternals.Suite -e
+
+   独立 Process Explorer 入口:
+   winget install --id Microsoft.Sysinternals.ProcessExplorer -e
+
+5. 启用 WSL/VMP 前置组件
+
+   VirtualMachinePlatform 和 Microsoft-Windows-Subsystem-Linux 是 WSL2 与
+   Docker Desktop WSL2 backend 的基础组件。启用后检查是否要求重启。
+
+
+二、重启门
+
+满足任一条件时应先重启，再进入开发环境阶段：
+
+1. Windows Update 或组件安装要求重启。
+2. VirtualMachinePlatform 状态不是 Enabled。
+3. Microsoft-Windows-Subsystem-Linux 状态不是 Enabled。
+4. wsl --status 提示需要更新或重启。
+5. BIOS/UEFI 中刚启用 VT-x/AMD-V。
+
+重启后检查:
+
+   wsl --status
+   wsl --version
+   Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
+   Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+
+
+三、开发环境
+
+1. AI 工具
+
+   ChatGPT 商店版:
+   winget install 9PLM9XGG6VKS --source msstore -e
+
+   OpenAI Codex:
+   winget install --id OpenAI.Codex -e
+
+2. WSL/Docker 深度检测与安装
+
+   检测项:
+   - CPU 固件虚拟化（HypervisorPresent、VirtualizationFirmwareEnabled）
+   - VT-x/AMD-V 与 SLAT
+   - VirtualMachinePlatform
+   - Microsoft-Windows-Subsystem-Linux
+   - WSL 状态、WSL 内核、默认版本
+   - docker.exe、com.docker.service、docker-users
+
+   初始化:
+
+   wsl --update
+   wsl --set-default-version 2
+   wsl --install --distribution Ubuntu --no-launch
+
+   全部前置条件通过后:
+
+   winget install --id Docker.DockerDesktop -e
+
+   如果当前用户刚加入 docker-users，请重新登录后再验证 Docker。
+
+3. Python 分工
+
+   系统 Python + uv：普通脚本、单文件工具、uv 项目开发。
+
+   winget install --id Python.Python.3.13 -e
+   winget install --id astral-sh.uv -e
+
+   脚本设置 UV_PYTHON_PREFERENCE=system，让 uv 以系统 Python 为基础：
+
+   uv init
+   uv add <package>
+   uv run <script-or-command>
+
+   conda：科学计算、CUDA/ML、仿真和特定项目环境。
+
+   winget install --id Anaconda.Anaconda3 -e
+   conda init powershell
+   conda config --set auto_activate_base false
+
+   默认 python 保持为系统 Python；需要科学计算环境时显式执行：
+
+   conda create -n science python=3.13
+   conda activate science
+   conda install <packages>
+
+4. 其他开发与工程软件
+
+   Node.js:   winget install --id OpenJS.NodeJS -e
+   VS Code:   winget install --id Microsoft.VisualStudioCode -e
+   R:         winget install --id RProject.R -e
+   RStudio:   winget install --id Posit.RStudio -e
+   Postman:   winget install --id Postman.Postman -e
+   DBeaver:   winget install --id DBeaver.DBeaver.Community -e
+   KiCad:     winget install --id KiCad.KiCad -e
+   FreeCAD:   winget install --id FreeCAD.FreeCAD -e
+   MobaXterm: winget install --id Mobatek.MobaXterm -e
+
+5. 其他语言工具链
+
+   OpenJDK 21: winget install --id Microsoft.OpenJDK.21 -e
+   Go:         winget install --id GoLang.Go -e
+   Rustup:     winget install --id Rustlang.Rustup -e
+   MinGW:      winget install --id BrechtSanders.WinLibs.POSIX.UCRT -e
+   Git LFS:    git lfs install
+
+
+四、验证
+
+重新打开终端并执行:
+
+   python --version
+   uv --version
+   conda --version
+   node --version
+   java -version
+   go version
+   rustc --version
+   gcc --version
+   git lfs version
+   wsl --version
+   docker --version
+
+详细检测结果保存于:
+
+   C:\ProgramData\SetupNewPC\virtualization-report.json
+   C:\ProgramData\SetupNewPC\docker-readiness.json
+   C:\ProgramData\SetupNewPC\python-strategy.txt
+
+
+五、商业软件提醒
+
+MATLAB / Simulink、AutoCAD / SolidWorks / Ansys、Keil / STM32CubeIDE / Vivado
+仍需通过官方账号、企业或校园许可渠道安装。

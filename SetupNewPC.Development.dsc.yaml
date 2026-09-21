@@ -1,0 +1,435 @@
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  description: Stage 2/2 - applies only after SetupNewPC.WinBase.dsc.yaml and any requested reboot. It gates Docker on virtualization/WSL/VMP and installs the development environment.
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+# ---------------------------------------------------------------------------
+# 1. Reboot and virtualization gate
+# ---------------------------------------------------------------------------
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: RebootAndVirtualizationGate
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $pending = @()
+        if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') {
+          $pending += 'Component Based Servicing'
+        }
+        if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') {
+          $pending += 'Windows Update'
+        }
+        $sm = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' -ErrorAction SilentlyContinue
+        if ($sm.PendingFileRenameOperations) { $pending += 'Pending file rename' }
+        if ($pending.Count -gt 0) {
+          throw "Reboot required before development stage: $($pending -join ', ')"
+        }
+
+        $vmp = (Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -ErrorAction Stop).State
+        $wslFeature = (Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -ErrorAction Stop).State
+        if ($vmp -ne 'Enabled' -or $wslFeature -ne 'Enabled') {
+          throw "WSL/VMP is not active. VirtualMachinePlatform=$vmp; WSL=$wslFeature. Reboot and rerun."
+        }
+
+        $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+        $computer = Get-CimInstance Win32_ComputerSystem
+        if ($computer.HypervisorPresent -eq $false -and
+            $cpu.VirtualizationFirmwareEnabled -eq $false -and
+            $cpu.VMMonitorModeExtensions -eq $false) {
+          throw 'CPU virtualization is unavailable. Enable VT-x/AMD-V in BIOS/UEFI.'
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Stop the development stage until reboot is complete and WSL/VMP are active.
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: WSLUpdate
+  dependsOn:
+  - RebootAndVirtualizationGate
+  properties:
+    executable: C:\Windows\System32\wsl.exe
+    arguments:
+      "0": --update
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Update the WSL kernel and service.
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: WSLDefaultVersion
+  dependsOn:
+  - WSLUpdate
+  properties:
+    executable: C:\Windows\System32\wsl.exe
+    arguments:
+      "0": --set-default-version
+      "1": "2"
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Use WSL2 as the default backend.
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: WSLUbuntu
+  dependsOn:
+  - WSLDefaultVersion
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $distros = & wsl.exe --list --quiet 2>$null
+        if ($distros -notmatch 'Ubuntu') {
+          & wsl.exe --install --distribution Ubuntu --no-launch
+          if ($LASTEXITCODE -ne 0) { throw 'Ubuntu WSL distribution installation failed.' }
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Install Ubuntu without launching first-run user creation.
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: DockerReadiness
+  dependsOn:
+  - WSLUbuntu
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+        $computer = Get-CimInstance Win32_ComputerSystem
+        $vmp = (Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform).State
+        $wslFeature = (Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux).State
+        $docker = Get-Command docker.exe -ErrorAction SilentlyContinue
+        $service = Get-Service -Name com.docker.service -ErrorAction SilentlyContinue
+        $wslStatus = (& wsl.exe --status 2>&1 | Out-String).Trim()
+        $report = [ordered]@{
+          Timestamp = (Get-Date).ToString('o')
+          HypervisorPresent = [bool]$computer.HypervisorPresent
+          VirtualizationFirmwareEnabled = $cpu.VirtualizationFirmwareEnabled
+          VMMonitorModeExtensions = $cpu.VMMonitorModeExtensions
+          VirtualMachinePlatform = [string]$vmp
+          MicrosoftWindowsSubsystemForLinux = [string]$wslFeature
+          WslStatus = $wslStatus
+          DockerExecutable = if ($docker) { $docker.Source } else { $null }
+          DockerServiceStatus = if ($service) { [string]$service.Status } else { $null }
+        }
+        $dir = Join-Path $env:ProgramData 'SetupNewPC'
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $dir 'docker-readiness.json') -Encoding UTF8
+        if ($vmp -ne 'Enabled' -or $wslFeature -ne 'Enabled') { throw 'WSL/VMP is not ready for Docker Desktop.' }
+        if (-not $wslStatus) { throw 'wsl --status returned no usable status.' }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Persist a Docker/WSL/virtualization readiness report and block on unusable prerequisites.
+
+- type: Microsoft.WinGet/Package
+  name: DockerDesktop
+  dependsOn:
+  - DockerReadiness
+  properties:
+    id: Docker.DockerDesktop
+    source: winget
+    useLatest: true
+  metadata:
+    description: Install Docker Desktop only after the WSL/VMP readiness gate passes.
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: ConfigureDockerUsers
+  dependsOn:
+  - DockerDesktop
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $group = Get-LocalGroup -Name docker-users -ErrorAction SilentlyContinue
+        if ($group) {
+          $user = "$env:USERDOMAIN\$env:USERNAME"
+          $member = Get-LocalGroupMember -Group docker-users -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -ieq $user }
+          if (-not $member) { Add-LocalGroupMember -Group docker-users -Member $user }
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Add the current user to docker-users.
+
+# ---------------------------------------------------------------------------
+# 2. Development runtimes and AI tools
+# ---------------------------------------------------------------------------
+- type: Microsoft.WinGet/Package
+  name: ChatGPT
+  properties:
+    id: 9PLM9XGG6VKS
+    source: msstore
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: CodexCLI
+  properties:
+    id: OpenAI.Codex
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: SystemPython
+  properties:
+    id: Python.Python.3.13
+    source: winget
+    useLatest: true
+  metadata:
+    description: System Python for ordinary scripts and uv projects.
+
+- type: Microsoft.WinGet/Package
+  name: uv
+  properties:
+    id: astral-sh.uv
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: NodeJS
+  properties:
+    id: OpenJS.NodeJS
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: VSCode
+  properties:
+    id: Microsoft.VisualStudioCode
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Anaconda
+  properties:
+    id: Anaconda.Anaconda3
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: ConfigurePythonStrategy
+  dependsOn:
+  - SystemPython
+  - uv
+  - Anaconda
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        [Environment]::SetEnvironmentVariable('UV_PYTHON_PREFERENCE', 'system', 'User')
+        $env:UV_PYTHON_PREFERENCE = 'system'
+
+        $candidates = @(
+          (Join-Path $env:USERPROFILE 'anaconda3\Scripts\conda.exe'),
+          (Join-Path $env:USERPROFILE 'miniconda3\Scripts\conda.exe'),
+          'C:\ProgramData\Anaconda3\Scripts\conda.exe'
+        )
+        $conda = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        if ($conda) {
+          & $conda init powershell | Out-Host
+          & $conda config --set auto_activate_base false | Out-Host
+        }
+
+        $dir = Join-Path $env:ProgramData 'SetupNewPC'
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        @'
+        Python strategy for this machine
+
+        System Python: ordinary scripts and uv project development.
+        uv: UV_PYTHON_PREFERENCE=system; isolate every project in .venv.
+        conda: scientific computing, CUDA/ML stacks, simulation, and named project environments.
+        conda base auto-activation is disabled.
+        '@ | Set-Content -LiteralPath (Join-Path $dir 'python-strategy.txt') -Encoding UTF8
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Keep system Python as the default, make uv use it, and reserve conda for explicit scientific environments.
+
+# ---------------------------------------------------------------------------
+# 3. Science and engineering tools
+# ---------------------------------------------------------------------------
+- type: Microsoft.WinGet/Package
+  name: RProject
+  properties:
+    id: RProject.R
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: RStudio
+  properties:
+    id: Posit.RStudio
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Postman
+  properties:
+    id: Postman.Postman
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: DBeaver
+  properties:
+    id: DBeaver.DBeaver.Community
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: KiCad
+  properties:
+    id: KiCad.KiCad
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: FreeCAD
+  properties:
+    id: FreeCAD.FreeCAD
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: MobaXterm
+  properties:
+    id: Mobatek.MobaXterm
+    source: winget
+    useLatest: true
+
+# ---------------------------------------------------------------------------
+# 4. Other language toolchains
+# ---------------------------------------------------------------------------
+- type: Microsoft.WinGet/Package
+  name: OpenJDK21
+  properties:
+    id: Microsoft.OpenJDK.21
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: JavaHome
+  dependsOn:
+  - OpenJDK21
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $java = Get-Command java.exe -ErrorAction SilentlyContinue
+        if (-not $java) { throw 'java.exe not found' }
+        $jdkHome = Split-Path (Split-Path $java.Source -Parent) -Parent
+        [Environment]::SetEnvironmentVariable('JAVA_HOME', $jdkHome, 'Machine')
+        $path = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+        if ($path -notlike "*$jdkHome\bin*") {
+          [Environment]::SetEnvironmentVariable('Path', "$path;$jdkHome\bin", 'Machine')
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Configure JAVA_HOME.
+
+- type: Microsoft.WinGet/Package
+  name: Go
+  properties:
+    id: GoLang.Go
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: GoPath
+  dependsOn:
+  - Go
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $go = 'C:\Program Files\Go\bin\go.exe'
+        if (Test-Path $go) { & $go env -w "GOPATH=$env:USERPROFILE\go" }
+      treatAsArray: true
+  metadata:
+    description: Configure the Go workspace.
+
+- type: Microsoft.WinGet/Package
+  name: Rustup
+  properties:
+    id: Rustlang.Rustup
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: RustStable
+  dependsOn:
+  - Rustup
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $rustup = Join-Path $env:USERPROFILE '.cargo\bin\rustup.exe'
+        if (Test-Path $rustup) { & $rustup default stable }
+      treatAsArray: true
+  metadata:
+    description: Install the Rust stable toolchain.
+
+- type: Microsoft.WinGet/Package
+  name: MinGW
+  properties:
+    id: BrechtSanders.WinLibs.POSIX.UCRT
+    source: winget
+    useLatest: true
+
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: GitLFS
+  properties:
+    executable: C:\Program Files\Git\cmd\git.exe
+    arguments:
+      "0": lfs
+      "1": install
+      treatAsArray: true
+  metadata:
+    description: Initialize Git LFS after Git is available.

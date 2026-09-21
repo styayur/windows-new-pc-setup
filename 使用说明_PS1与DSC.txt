@@ -1,238 +1,344 @@
-Windows 新机配置脚本与 DSC 使用说明
+﻿Windows 新机配置脚本与 DSC 使用说明
 
 一、交付文件
-1. SetupNewPC_Optimized.ps1：可直接运行的 PowerShell 脚本。
-2. SetupNewPC_Optimized.ps1.txt：PS1 代码文本副本。
-3. SetupNewPC.dsc.yaml：WinGet/DSC v3 配置。
-4. SetupNewPC.dsc.yaml.txt：DSC 配置文本副本。
-5. 使用说明_PS1与DSC.txt：本说明。
-6. 使用说明_PS1与DSC.pdf：本说明的 PDF 版本。
 
-PS1 与 DSC 二选一执行，不要同时运行。
-若已执行某一个，另一个仍可用于补装或校验，但会重新执行脚本类资源。
+1. SetupNewPC_Optimized.ps1
+   主脚本。支持取消、状态续跑、重启门和开发环境阶段。
 
-二、适用环境
+2. SetupNewPC_Optimized.ps1.txt
+   主脚本的 UTF-8 文本副本，便于直接查看或复制。
+
+3. SetupNewPC.WinBase.dsc.yaml
+   DSC 阶段 1：Windows 基础、硬件诊断工具、
+   VirtualMachinePlatform 和 Windows Subsystem for Linux 功能启用。
+
+4. SetupNewPC.Development.dsc.yaml
+   DSC 阶段 2：重启后的深度检测、WSL2、Docker Desktop 和开发工具链。
+
+5. 对应的 .txt 文件
+   YAML 文本副本，便于直接查看。
+
+6. installfirsttwoapplications.txt
+   人工安装顺序、包 ID、Python 分工和验证命令。
+
+7. 使用说明_PS1与DSC.txt / 使用说明_PS1与DSC.pdf
+   本说明及其 PDF 版本。
+
+8. Setupnewpc.ps1
+   兼容入口，会把参数转发给 SetupNewPC_Optimized.ps1。
+
+PS1 与 DSC 二选一执行，不要混用。兼容入口和主脚本也算同一种 PS1 路线。
+
+
+二、总体架构：Windows 基础 -> 重启门 -> 开发环境
+
+之所以采用三段式，是因为以下组件可能在启用后要求重启：
+
+1. VirtualMachinePlatform（VMP）
+2. Microsoft-Windows-Subsystem-Linux（WSL 可选功能）
+3. Windows Update 或组件服务安装
+4. BIOS/UEFI 中刚开启的 VT-x/AMD-V
+
+若这些组件尚未生效，直接安装 Docker Desktop 和开发工具容易出现
+“WSL 已安装但不可用”或 Docker 服务无法启动的问题。因此脚本在
+Windows 基础完成后检查待重启状态，必要时保存进度并停止。
+
+主脚本默认 -Stage Auto -Profile Developer 时会：
+
+1. 执行 Windows 基础阶段。
+2. 安装 PowerShell 7、HiBit Uninstaller 和 Core 软件。
+3. 默认跳过 WinUtil。只有显式传入 -EnableWinUtil 时才会下载到本地、计算 SHA256，并在校验或人工确认后执行 Standard preset：
+   .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+4. 安装基础桌面软件、LibreHardwareMonitor、CrystalDiskInfo、
+   CrystalDiskMark、Sysinternals Suite 和 Process Explorer。
+5. 深度检测虚拟化、WSL、VMP 和 Linux 子系统功能。
+6. 如果不需要重启，本轮继续执行开发环境阶段。
+7. 如果需要重启，保存状态并登记一次登录时的续跑任务；重启后自动从
+   Development 阶段继续。每个软件和步骤的结果都会写入 state.json。
+
+
+三、适用环境
+
 1. 推荐 Windows 11 22H2 或更高版本，x64 架构。
-2. 必须联网，并有管理员权限。
-3. 使用 Microsoft Store 源时必须能访问 Store。
-4. WSL2、Docker 可能要求启用虚拟化并重启。
+2. 必须联网，并具有管理员权限。
+3. Microsoft Store 源必须可访问。
+4. BIOS/UEFI 需要支持并启用 CPU 虚拟化。
 5. 商业软件不自动安装，只保留提示。
 
-三、执行前检查
-1. 打开“终端(管理员)”或“PowerShell(管理员)”。
-2. 检查 WinGet：
 
-winget --version
+四、PS1 快速执行
 
-3. 建议先更新 Windows 与 Microsoft Store，再运行配置。
-4. 建议在干净的虚拟机或新机先验证，不要直接用于生产机。
-5. 运行前审查 PS1、DSC YAML 以及所有第三方软件许可。
+1. 在管理员 PowerShell 中进入文件目录。
 
-四、PS1 脚本使用方法
-1. 将 SetupNewPC_Optimized.ps1 放到任意本地目录。
-2. 若只有 SetupNewPC_Optimized.ps1.txt，请复制内容并另存为 .ps1 文件。
-3. 在管理员 PowerShell 中进入该目录：
+Set-Location "E:\Docs\configwenjian"
 
-Set-Location "$env:USERPROFILE\Downloads"
-
-4. 解除下载文件锁定，并仅对当前进程放行脚本：
+2. 解除文件锁定，并只对当前进程放行脚本。
 
 Unblock-File .\SetupNewPC_Optimized.ps1
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 
-5. 直接运行：
+3. 直接运行。
 
 .\SetupNewPC_Optimized.ps1
 
-6. 脚本会先检查管理员权限；权限不足时自动弹出 UAC。
-7. 执行过程中可能需要人工操作：
-   - 在 WinUtil 中完成系统优化后关闭窗口。
-   - Microsoft Store 应用可能要求登录。
-   - Docker Desktop 首次启动需要接受协议。
-   - WSL 安装后通常需要重启。
+4. 如果需要自动选择阶段或只运行其中一个阶段：
 
-五、PS1 可选参数
-1. 不运行 WinUtil：
+.\SetupNewPC_Optimized.ps1 -Stage Auto -Profile Developer
+.\SetupNewPC_Optimized.ps1 -Stage WindowsBase -Profile Engineering
+.\SetupNewPC_Optimized.ps1 -Stage Development -Profile Engineering
 
-.\SetupNewPC_Optimized.ps1 -SkipWinUtil
 
-2. 不安装 WSL：
+五、PS1 Profile 与参数
 
-.\SetupNewPC_Optimized.ps1 -SkipWSL
+1. -Profile
+   Minimal、Developer、AI、Engineering、Full。默认 Developer。
+   Minimal=Core；Developer=Core+Developer；AI=Core+Developer+AI；
+   Engineering=Core+Developer+Engineering；Full=全部组。
 
-3. 不安装 ChatGPT Microsoft Store 版：
+2. -ExtraGroups
+   在 Profile 之上追加 Core、Developer、AI、Engineering 或 Personal。
 
-.\SetupNewPC_Optimized.ps1 -SkipStoreApps
+3. -IncludePersonal
+   向任意 Profile 加入 Personal 软件，如 Steam、Thorium、PotPlayer。
 
-4. 无人值守时跳过结束暂停：
+4. -EnableWinUtil
+   显式允许下载并执行 WinUtil Standard preset；默认不执行。
 
-.\SetupNewPC_Optimized.ps1 -NoPause
+5. -WinUtilSha256
+   下载 WinUtil 后必须匹配的 64 位十六进制 SHA256。
+   在 -NoPause 无人值守模式中未提供该参数会直接失败。
 
-5. 参数可以组合：
+6. -SkipWinUtil
+   即使同时传入 -EnableWinUtil，也强制跳过 WinUtil。
 
-.\SetupNewPC_Optimized.ps1 -SkipWinUtil -SkipWSL -SkipStoreApps -NoPause
+7. -SkipWSL
+   跳过 WSL/VMP 功能启用、WSL 初始化和 Docker 依赖。
 
-六、PS1 执行内容
-1. 安装 HiBit Uninstaller。
-2. 按需启动 WinUtil。
-3. 安装浏览器、Git、编辑器、R、Steam 等基础软件。
-4. 安装 Python 3.13、Node.js、CC Switch、Notepad3、PixPin、PotPlayer、Thorium。
-5. 安装 ChatGPT、Codex CLI、Claude、Cursor。
-6. 安装 WSL、Docker Desktop，并初始化 Git LFS。
-7. 安装 Anaconda、Postman、DBeaver、KiCad、FreeCAD、MobaXterm。
-8. 安装 OpenJDK 21、Go、Rustup、WinLibs MinGW。
-9. 自动定位 Java 路径并设置 JAVA_HOME 和系统 PATH。
-10. 执行版本验证并汇总失败项。
+8. -SkipDocker
+   保留 WSL 初始化，但不安装 Docker Desktop。
 
-七、PS1 日志与验证
-1. 日志位置：
+9. -DockerSmokeTest
+   仅在 Docker 已真正可用时执行 docker run --rm hello-world。
 
+10. -SkipStoreApps
+    不安装 ChatGPT Microsoft Store 版；OpenAI Codex 仍按 Profile 安装。
+
+11. -SkipCondaInit
+    安装/检测 conda，但不执行 conda init powershell，不改 PowerShell profile。
+
+12. -AllowReboot
+    检测到重启门后自动重启；默认询问。
+
+13. -NoResume
+    不登记登录后的自动续跑任务。
+
+14. -NoPause
+    无人值守时跳过结束暂停。
+
+示例：
+
+.\SetupNewPC_Optimized.ps1 -Profile Developer
+.\SetupNewPC_Optimized.ps1 -Profile AI -IncludePersonal -DockerSmokeTest
+.\SetupNewPC_Optimized.ps1 -Profile Engineering -SkipCondaInit
+.\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash>
+
+六、重启门与续跑
+
+脚本检查以下状态：
+
+1. Windows Update RebootRequired。
+2. Component Based Servicing RebootPending。
+3. PendingFileRenameOperations。
+4. VirtualMachinePlatform 状态。
+5. Microsoft-Windows-Subsystem-Linux 状态。
+6. CPU 固件虚拟化、VT-x/AMD-V、SLAT、HypervisorPresent。
+7. WSL 状态、WSL 版本、默认版本和已安装发行版。
+8. docker.exe、com.docker.service 和 docker-users 用户组。
+
+状态和检测报告位置：
+
+C:\ProgramData\SetupNewPC\state.json
+C:\ProgramData\SetupNewPC\virtualization-report.json
+C:\ProgramData\SetupNewPC\docker-readiness.json
+C:\ProgramData\SetupNewPC\python-strategy.txt
+C:\ProgramData\SetupNewPC\environment-report.json
+C:\ProgramData\SetupNewPC\environment-report.txt
 C:\ProgramData\SetupNewPC\setup.log
 
-2. 重启后打开新的 PowerShell，执行：
+state.json 的顶层状态为 Complete、CompletedWithFailures、AwaitingReboot 或
+Failed。Items 下的每个软件/步骤记录包含 Name、Id、Status、Error、Attempts、
+LastAttemptAt、LastSuccessAt 和 Version。重复运行时已经成功且仍存在的项目会
+跳过，失败项目会重试。
 
+自动续跑任务名称：
+
+SetupNewPC-Resume-After-Reboot
+
+开发环境成功后任务会被移除。
+
+
+七、开发环境与 Python 分工
+
+1. 系统 Python
+   Python.Python.3.13 用于普通脚本、单文件工具和 uv 项目开发。
+
+2. uv
+   安装 astral-sh.uv，并设置：
+
+   UV_PYTHON_PREFERENCE=system
+
+   典型用法：
+
+   uv init
+   uv add <package>
+   uv run <script-or-command>
+
+   每个项目使用自己的 .venv、pyproject.toml 和 uv.lock。
+
+3. conda
+   Anaconda 用于科学计算、CUDA/ML、仿真和特定项目环境。
+
+   conda init powershell
+   conda config --set auto_activate_base false
+
+   默认 python 保持系统 Python。需要使用科学计算环境时显式执行：
+
+   conda create -n science python=3.13
+   conda activate science
+   conda install <packages>
+
+
+八、Docker Desktop 深度检测
+
+Docker Desktop 只在以下门禁通过后安装：
+
+1. HypervisorPresent 或 CPU 虚拟化扩展可用。
+2. VirtualMachinePlatform 状态为 Enabled。
+3. Microsoft-Windows-Subsystem-Linux 状态为 Enabled。
+4. 不存在待重启原因。
+5. WSL 状态可用，默认版本为 WSL2。
+6. Ubuntu 发行版已安装或安装成功。
+
+安装后脚本会尝试启动 com.docker.service，并把当前用户加入
+docker-users。新加入该组后必须重新登录才生效。
+
+脚本把“安装成功”和“真正可用”分开验证：必须同时通过 docker.exe、
+com.docker.service 和 docker info。只有显式使用 -DockerSmokeTest 时，
+才会额外执行 docker run --rm hello-world。
+
+
+九、DSC 使用：两个阶段按顺序执行
+
+DSC 不支持在配置执行中途可靠地等待系统重启。本目录因此拆成两个
+独立的 DSC 文件，不要把它们合并为一个连续配置。
+
+阶段 1：Windows 基础
+
+winget configure validate -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure show -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure -f .\SetupNewPC.WinBase.dsc.yaml
+
+如果输出 REBOOT REQUIRED，请立即重启。重启后执行阶段 2。
+
+阶段 2：开发环境
+
+winget configure validate -f .\SetupNewPC.Development.dsc.yaml
+winget configure show -f .\SetupNewPC.Development.dsc.yaml
+winget configure -f .\SetupNewPC.Development.dsc.yaml
+
+Development 配置的第一项是 RebootAndVirtualizationGate：
+
+1. 如果仍有待重启原因，会停止并报错。
+2. 如果 VMP 或 WSL 功能没有生效，会停止并报错。
+3. 如果 CPU 虚拟化不可用，会停止并提示 BIOS/UEFI。
+4. 只有门禁通过后，才会执行 WSL2 更新、Ubuntu 和 Docker Desktop。
+
+如果当前系统把扩展名限制为 .winget，可复制并改名：
+
+Copy-Item .\SetupNewPC.WinBase.dsc.yaml .\SetupNewPC.WinBase.dsc.winget
+Copy-Item .\SetupNewPC.Development.dsc.yaml .\SetupNewPC.Development.dsc.winget
+
+
+十、验证
+
+主脚本在 Development 完成后会自动生成 PASS/FAIL/SKIPPED 表格，并按项目输出
+版本。报告保存为 C:\ProgramData\SetupNewPC\environment-report.json 和
+environment-report.txt。
+
+重启或重新登录后，也可以手工打开新的 PowerShell，执行：
+
+pwsh --version
 python --version
+uv --version
+conda --version
 node --version
 java -version
 go version
 rustc --version
+cargo --version
+rustup --version
 gcc --version
 git lfs version
+wsl --version
+docker --version
 
-3. 若某命令找不到，先重启，再检查系统 PATH。
-4. Java 可检查：
+Java 可检查：
 
 $env:JAVA_HOME
 
-5. 脚本中的第三方包 ID 已在生成时通过 WinGet 元数据核对。
+WSL/Docker：
 
-八、DSC 配置文件说明
-SetupNewPC.dsc.yaml 使用 DSC v3 文档结构：
-1. $schema 指向 DSC v3 配置文档模式。
-2. metadata.winget.processor.identifier 为 dscv3。
-3. 软件包资源类型为 Microsoft.WinGet/Package。
-4. 交互或脚本步骤使用 Microsoft.DSC.Transitional/RunCommandOnSet。
-5. dependsOn 用于保证 Git、WSL、JDK 等前置顺序。
-6. useLatest: true 表示安装最新稳定版。
-7. 商业软件不列入自动安装资源。
+wsl --status
+wsl --list --verbose
+docker info
 
-九、DSC 推荐用法：winget configure
-该方式由 WinGet 调用 DSC v3，适合新机直接使用。
-要求 WinGet 1.11 或更高版本。
+硬件诊断工具：
 
-1. 打开管理员 PowerShell，进入 YAML 所在目录：
+LibreHardwareMonitor
+CrystalDiskInfo
+CrystalDiskMark
+procexp.exe
 
-Set-Location "E:\Docs\configwenjian"
 
-2. 检查版本：
+十一、常见问题
 
-winget --version
+1. BIOS/UEFI 中虚拟化未开启
+   - 开始菜单按 F2、Del、F10 或厂商热键进入 BIOS/UEFI。
+   - 启用 Intel VT-x、Intel Virtualization Technology、SVM Mode 或 AMD-V。
+   - 保存后重新启动，再运行 Development 阶段。
 
-3. 先校验 YAML：
+2. VMP 或 WSL 功能没有生效
+   - 执行 Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform。
+   - 执行 Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux。
+   - 状态必须是 Enabled，而不是 EnablePending。
 
-winget configure validate -f .\SetupNewPC.dsc.yaml
+3. WSL 或 Docker 失败
+   - 先完成所有 Windows Update 和重启。
+   - 执行 wsl --update。
+   - 执行 wsl --set-default-version 2。
+   - 执行 wsl --install -d Ubuntu --no-launch。
+   - 如果 Docker 用户组刚修改，重新登录后执行 docker info。
 
-4. 查看解析结果：
+4. WinUtil Standard preset 失败
+   - 检查网络能否访问 christitus.com 和 GitHub。
+   - 检查管理员权限。
+   - 使用 -SkipWinUtil 跳过，或手动执行：
+     .\SetupNewPC_Optimized.ps1 -EnableWinUtil -WinUtilSha256 <64-hex-hash>
 
-winget configure show -f .\SetupNewPC.dsc.yaml
+5. 系统 python 被 conda 覆盖
+   - 重新打开终端，检查 Get-Command python 的 Source。
+   - conda base 自动激活已关闭。
+   - 需要使用科学计算时显式执行 conda activate <env>。
 
-5. 测试当前状态：
+6. 脚本等待重启但用户选择稍后
+   - 状态文件仍为 AwaitingReboot。
+   - 重启并登录后，续跑任务会继续；也可手动再次运行 -Stage Auto。
 
-winget configure test -f .\SetupNewPC.dsc.yaml
 
-说明：RunCommandOnSet 类资源在 test 阶段通常会报告需要执行，这不等于 YAML 无效。
+十二、安全与维护
 
-6. 应用配置：
-
-winget configure -f .\SetupNewPC.dsc.yaml
-
-7. 若系统把扩展名限制为 .winget，可复制并改名：
-
-Copy-Item .\SetupNewPC.dsc.yaml .\SetupNewPC.dsc.winget
-winget configure validate -f .\SetupNewPC.dsc.winget
-winget configure -f .\SetupNewPC.dsc.winget
-
-8. 查看已应用记录：
-
-winget configure list
-
-9. 再次执行同一文件即可补装缺失软件；已安装软件通常会被识别并跳过。
-
-十、DSC 独立用法：dsc CLI
-1. 安装 DSC v3：
-
-winget install --id Microsoft.DSC -e --source winget --accept-source-agreements --accept-package-agreements
-
-2. 打开新的管理员 PowerShell，检查：
-
-dsc --version
-dsc resource list Microsoft.WinGet/Package
-dsc resource list Microsoft.DSC.Transitional/RunCommandOnSet
-
-3. 若 Microsoft.WinGet/Package 不存在，优先使用上面的 winget configure 路线，并更新 WinGet。
-
-4. 校验并测试：
-
-dsc config test --file .\SetupNewPC.dsc.yaml
-
-5. 应用：
-
-dsc config set --file .\SetupNewPC.dsc.yaml
-
-6. 单独查看文件解析：
-
-dsc config get --file .\SetupNewPC.dsc.yaml
-
-注意：dsc CLI 与 WinGet 版本、资源可用性有关；winget configure 的兼容性通常更好。
-
-十一、如何编辑 DSC YAML
-1. 每个资源从“- type:”开始，缩进固定为两个空格。
-2. 不要使用 Tab，不要改动同级键的对齐。
-3. name 必须唯一，dependsOn 必须引用已有 name。
-4. 删除 WinUtil：删除 name: WinUtil 的整个资源块。
-5. 删除 ChatGPT：删除 name: ChatGPT 的整个资源块。
-6. 删除 WSL：同时删除 Docker 的 dependsOn 和 WSL 资源。
-7. 删除 Git：同时删除 GitLFS，或移除其 dependsOn。
-8. 删除 OpenJDK：同时删除 JavaHome，或移除其 dependsOn。
-9. 固定版本时，将 useLatest: true 改为 version: 具体版本。
-10. 新增软件时，复制一个 Microsoft.WinGet/Package 块并替换 id 与 name。
-
-十二、常见问题
-1. winget 不可用：
-   - 更新“应用安装程序”(App Installer)。
-   - 新开终端后再次执行 winget --version。
-
-2. 找不到包：
-   - 执行 winget source update。
-   - 检查包 ID 是否仍存在。
-   - 本文件中的包 ID 已在生成时核对，但上游可能变更。
-
-3. Microsoft Store 安装失败：
-   - 登录 Store，检查区域与网络。
-   - 或使用 PS1 的 -SkipStoreApps，并删除 YAML 的 ChatGPT 资源。
-
-4. WSL 或 Docker 失败：
-   - 在 BIOS/UEFI 中启用 CPU 虚拟化。
-   - 以管理员身份执行 wsl --update。
-   - 重启后重新运行配置。
-
-5. Java 环境变量未生效：
-   - 重启或重新登录。
-   - 检查 $env:JAVA_HOME。
-   - 必要时重新执行 JavaHome 资源。
-
-6. 脚本中出现失败项：
-   - 查看 C:\ProgramData\SetupNewPC\setup.log。
-   - 修复网络、Store 或权限后再次运行。
-
-7. 不希望执行远程 WinUtil：
-   - PS1 使用 -SkipWinUtil。
-   - DSC 中删除 WinUtil 资源块。
-
-十三、安全与维护建议
-1. 不要在不了解内容时执行远程脚本。WinUtil 资源适合可信任环境。
-2. 把此配置放入版本管理，并在每次上游包变更后重新校验。
-3. 企业环境应先由管理员审查许可证、代理、证书和源策略。
-4. 不建议在域控制器、生产服务器或他人设备上运行。
-5. 关键数据先备份；重大版本升级前建立还原点或快照。
-6. 定期更新包 ID、DSC schema、WinGet 与 Microsoft.DSC。
+1. 执行前审查 PS1、DSC YAML、第三方软件许可和下载来源。
+2. 建议在虚拟机或可恢复环境中先验证。
+3. WinUtil 默认跳过；只有显式启用、下载到本地并校验 SHA256 或人工确认后才会执行远程脚本。
+4. 企业环境应先检查代理、证书、源策略和许可证。
+5. 不要把此配置用于域控制器、生产服务器或他人设备。

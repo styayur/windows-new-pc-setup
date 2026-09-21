@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -612,17 +612,17 @@
   <main id="main">
     <section class="hero" id="top">
       <div class="hero-copy">
-        <p class="kicker">Windows 11 · PowerShell + DSC v3</p>
-        <h1>一台新机，两种可复核的落地方式。</h1>
-        <p class="hero-lead">把散落的 WinGet 命令、环境变量和人工记忆，整理成可版本化的装机流程。PS1 负责顺序执行与人工交互，DSC YAML 负责声明状态、测试差异和补装缺失项。</p>
+        <p class="kicker">Windows 11 · 基础 → 重启门 → 开发环境</p>
+        <h1>先打好 Windows 基础，再让开发环境安全落地。</h1>
+        <p class="hero-lead">把 WSL、VMP、虚拟化与 Docker 的前置关系纳入装机流程。PS1 可保存状态并在重启后续跑；DSC 拆成 WindowsBase 与 Development 两阶段，避免在功能未生效时误装 Docker。</p>
         <div class="hero-actions">
           <a class="primary-button" href="#quickstart">开始使用</a>
           <a class="ghost-button" href="#customize">查看自定义方法</a>
         </div>
         <div class="hero-facts" aria-label="配置概况">
-          <div class="fact"><strong>40</strong><span>DSC 资源</span></div>
-          <div class="fact"><strong>34</strong><span>WinGet 软件包</span></div>
-          <div class="fact"><strong>2</strong><span>执行路线</span></div>
+          <div class="fact"><strong>3</strong><span>阶段：基础 / 重启 / 开发</span></div>
+          <div class="fact"><strong>2</strong><span>DSC 文件，按顺序执行</span></div>
+          <div class="fact"><strong>2</strong><span>PS1 与 DSC 路线</span></div>
         </div>
       </div>
 
@@ -639,23 +639,18 @@
           </li>
           <li class="pipeline-item">
             <span class="step-no">02</span>
-            <span><strong>系统基线</strong><small>HiBit、WinUtil、基础工具</small></span>
+            <span><strong>Windows 基础</strong><small>PowerShell 7、HiBit、诊断工具；WinUtil opt-in</small></span>
             <span class="state check">APPLY</span>
           </li>
           <li class="pipeline-item">
             <span class="step-no">03</span>
-            <span><strong>开发环境</strong><small>Python、Node、Java、Go、Rust</small></span>
-            <span class="state check">APPLY</span>
+            <span><strong>重启门</strong><small>Virtualization、WSL、VMP、待重启状态</small></span>
+            <span class="state reboot">GATE</span>
           </li>
           <li class="pipeline-item">
             <span class="step-no">04</span>
-            <span><strong>工程平台</strong><small>WSL、Docker、Git LFS、工具链</small></span>
-            <span class="state reboot">REBOOT</span>
-          </li>
-          <li class="pipeline-item">
-            <span class="step-no">05</span>
-            <span><strong>结果验证</strong><small>版本、PATH、日志、失败项</small></span>
-            <span class="state ready">VERIFY</span>
+            <span><strong>开发环境</strong><small>WSL2、Docker、Python/uv、conda、工具链</small></span>
+            <span class="state check">APPLY</span>
           </li>
         </ol>
       </aside>
@@ -700,10 +695,10 @@
               </thead>
               <tbody>
                 <tr><td>执行模型</td><td>按顺序执行，方便插入交互步骤</td><td>声明目标状态，由资源测试并应用</td></tr>
-                <tr><td>适合场景</td><td>首次新机、需要 WinUtil 和人工确认</td><td>补装、重复执行、状态校验、配置审查</td></tr>
+                <tr><td>适合场景</td><td>首次新机、Profile 选择与重启续跑</td><td>补装、重复执行、状态校验、配置审查</td></tr>
                 <tr><td>可读性</td><td>逐条命令直观，容易边看边改</td><td>资源边界清晰，适合版本管理和差异比较</td></tr>
                 <tr><td>幂等性</td><td>WinGet 部分较稳定，脚本步骤可能重复执行</td><td>软件包资源可测试；命令资源通常每次执行</td></tr>
-                <tr><td>推荐入口</td><td><code>SetupNewPC_Optimized.ps1</code></td><td><code>SetupNewPC.dsc.yaml</code></td></tr>
+                <tr><td>推荐入口</td><td><code>SetupNewPC_Optimized.ps1</code>（Auto）</td><td>先 <code>SetupNewPC.WinBase.dsc.yaml</code>，重启后 <code>SetupNewPC.Development.dsc.yaml</code></td></tr>
               </tbody>
             </table>
           </div>
@@ -745,7 +740,7 @@ Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsArchitect
             <span class="section-index">03 / QUICKSTART</span>
             <div>
               <h2>快速开始</h2>
-              <p>选择一种路线，复制命令前先确认当前目录和文件名。两种路线都需要联网和管理员权限。</p>
+              <p>选择一种路线，复制命令前先确认当前目录和文件名。PS1 默认自动处理基础、重启门和开发环境；DSC 必须按两个文件分阶段执行。</p>
             </div>
           </div>
 
@@ -755,28 +750,32 @@ Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsArchitect
           </div>
 
           <div class="route-panel" id="route-ps1" role="tabpanel" aria-labelledby="tab-ps1">
-            <h3>首次新机部署</h3>
+            <h3>首次新机部署（默认 Auto）</h3>
             <div class="code-block">
               <div class="code-head"><span>管理员 PowerShell</span><button class="copy-button" type="button">复制</button></div>
               <pre><code>Set-Location "$env:USERPROFILE\Downloads"
 Unblock-File .\SetupNewPC_Optimized.ps1
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-.\SetupNewPC_Optimized.ps1</code></pre>
+.\SetupNewPC_Optimized.ps1 -Profile Developer</code></pre>
             </div>
-            <p>如果只有 <code>SetupNewPC_Optimized.ps1.txt</code>，先复制内容并另存为 <code>.ps1</code>。PowerShell 不会直接执行 <code>.ps1.txt</code>。</p>
+            <p>如果只有 <code>SetupNewPC_Optimized.ps1.txt</code>，先复制内容并另存为 <code>.ps1</code>。PowerShell 不会直接执行 <code>.ps1.txt</code>。默认 Profile 为 Developer；若 WSL/VMP 要求重启，脚本会登记登录续跑任务并自动进入 Development 阶段。</p>
           </div>
 
           <div class="route-panel" id="route-dsc" role="tabpanel" aria-labelledby="tab-dsc" hidden>
-            <h3>推荐：由 WinGet 调用 DSC v3</h3>
+            <h3>阶段 1：Windows 基础</h3>
             <div class="code-block">
               <div class="code-head"><span>管理员 PowerShell</span><button class="copy-button" type="button">复制</button></div>
               <pre><code>Set-Location "$env:USERPROFILE\Downloads"
-winget configure validate -f .\SetupNewPC.dsc.yaml
-winget configure show -f .\SetupNewPC.dsc.yaml
-winget configure test -f .\SetupNewPC.dsc.yaml
-winget configure -f .\SetupNewPC.dsc.yaml</code></pre>
+winget configure validate -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure show -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure -f .\SetupNewPC.WinBase.dsc.yaml
+
+# 若输出 REBOOT REQUIRED，先重启；然后执行阶段 2
+winget configure validate -f .\SetupNewPC.Development.dsc.yaml
+winget configure show -f .\SetupNewPC.Development.dsc.yaml
+winget configure -f .\SetupNewPC.Development.dsc.yaml</code></pre>
             </div>
-            <p><code>test</code> 可能会因为 <code>RunCommandOnSet</code> 资源没有测试能力而报告“需要执行”，这不代表 YAML 无效。</p>
+            <p>Development 配置的首个资源会再次检查待重启、VirtualMachinePlatform、WSL 功能和 CPU 虚拟化；门禁未通过时不会继续安装 Docker。</p>
           </div>
         </section>
 
@@ -785,7 +784,7 @@ winget configure -f .\SetupNewPC.dsc.yaml</code></pre>
             <span class="section-index">04 / PS1</span>
             <div>
               <h2>PowerShell 路线</h2>
-              <p>PS1 适合首次部署。它按阶段安装软件、刷新当前会话 PATH、设置 Java 环境，并在结束时执行版本检查。</p>
+              <p>PS1 按 Windows 基础、重启门、开发环境三个阶段执行。它保存状态、刷新 PATH、设置 Java/Python/conda 策略，并在结束时执行版本检查。</p>
             </div>
           </div>
 
@@ -794,9 +793,20 @@ winget configure -f .\SetupNewPC.dsc.yaml</code></pre>
             <table>
               <thead><tr><th>参数</th><th>作用</th><th>适用情况</th></tr></thead>
               <tbody>
-                <tr><td><code>-SkipWinUtil</code></td><td>不运行远程 WinUtil 脚本</td><td>不希望执行第三方在线脚本，或已经完成系统优化</td></tr>
-                <tr><td><code>-SkipWSL</code></td><td>不执行 <code>wsl --install</code></td><td>不开发 Linux 环境，或暂时不能重启</td></tr>
+                <tr><td><code>-Profile</code></td><td>选择 Minimal、Developer、AI、Engineering 或 Full</td><td>按机器用途控制软件组</td></tr>
+                <tr><td><code>-ExtraGroups</code></td><td>在 Profile 上追加 Core、Developer、AI、Engineering、Personal</td><td>需要临时补充某一组</td></tr>
+                <tr><td><code>-Stage Auto</code></td><td>默认；按状态自动执行基础、重启门和开发环境</td><td>首次运行和重启后续跑</td></tr>
+                <tr><td><code>-Stage WindowsBase</code></td><td>只运行 Windows 基础与 WSL/VMP 功能启用</td><td>先完成系统基线，稍后重启</td></tr>
+                <tr><td><code>-Stage Development</code></td><td>只运行重启后的开发环境</td><td>手动控制第二阶段的执行时机</td></tr>
+                <tr><td><code>-EnableWinUtil</code> / <code>-WinUtilSha256</code></td><td>默认跳过 WinUtil；显式启用后才下载、校验并执行</td><td>接受并审查第三方远程脚本的可信任环境</td></tr>
+                <tr><td><code>-SkipWinUtil</code></td><td>即使同时传入 <code>-EnableWinUtil</code>，也强制跳过 WinUtil</td><td>不希望执行第三方在线脚本</td></tr>
+                <tr><td><code>-SkipWSL</code></td><td>跳过 WSL/VMP、WSL 初始化及 Docker 前置依赖</td><td>不开发 Linux 环境，或暂时不能重启</td></tr>
+                <tr><td><code>-SkipDocker</code></td><td>保留 WSL 初始化，但不安装 Docker Desktop</td><td>暂不需要容器环境</td></tr>
+                <tr><td><code>-SkipCondaInit</code></td><td>保留 conda 检测，但不修改 PowerShell profile</td><td>不希望修改当前用户 profile</td></tr>
+                <tr><td><code>-DockerSmokeTest</code></td><td>Docker 已可用时执行 hello-world Smoke Test</td><td>需要端到端验证容器运行时</td></tr>
                 <tr><td><code>-SkipStoreApps</code></td><td>不安装 ChatGPT Microsoft Store 版</td><td>Store 不可用、没有账号或不需要该应用</td></tr>
+                <tr><td><code>-AllowReboot</code></td><td>检测到重启门时保存状态并自动重启</td><td>可无人值守的新机或测试虚拟机</td></tr>
+                <tr><td><code>-NoResume</code></td><td>不登记登录时的自动续跑任务</td><td>不希望修改计划任务，重启后手动继续</td></tr>
                 <tr><td><code>-NoPause</code></td><td>结束时不等待 Enter</td><td>远程终端、脚本化运行或需要直接关闭窗口</td></tr>
               </tbody>
             </table>
@@ -804,25 +814,28 @@ winget configure -f .\SetupNewPC.dsc.yaml</code></pre>
 
           <h3>组合示例</h3>
           <div class="code-block">
-            <div class="code-head"><span>跳过 WinUtil、WSL 和 Store</span><button class="copy-button" type="button">复制</button></div>
-            <pre><code>.\SetupNewPC_Optimized.ps1 -SkipWinUtil -SkipWSL -SkipStoreApps -NoPause</code></pre>
+            <div class="code-head"><span>Profile 组合示例</span><button class="copy-button" type="button">复制</button></div>
+            <pre><code>.\SetupNewPC_Optimized.ps1 -Profile AI -DockerSmokeTest
+.\SetupNewPC_Optimized.ps1 -Profile Engineering -SkipCondaInit
+.\SetupNewPC_Optimized.ps1 -Profile Full -EnableWinUtil -WinUtilSha256 <64-hex-hash></code></pre>
           </div>
 
           <h3>执行阶段</h3>
           <ol class="step-list">
-            <li>安装 HiBit Uninstaller，并按参数决定是否启动 WinUtil。</li>
-            <li>安装 7-Zip、浏览器、Git、GitHub CLI、VS Code、RStudio、R、Steam、Listary。</li>
-            <li>安装 Python 3.13、Node.js、CC Switch、Logseq、Notepad3、PixPin、PotPlayer、Thorium。</li>
-            <li>安装 ChatGPT、Codex CLI、Claude、Cursor。</li>
-            <li>安装 WSL、Docker Desktop，并初始化 Git LFS。</li>
-            <li>安装 Anaconda、Postman、DBeaver、KiCad、FreeCAD、MobaXterm。</li>
-            <li>安装 OpenJDK 21、Go、Rustup、WinLibs MinGW，并动态设置 Java 环境变量。</li>
-            <li>输出失败清单，提示重启和版本验证命令。</li>
+            <li><strong>Windows 基础：</strong>安装 PowerShell 7 与 Core 软件；WinUtil 默认跳过，仅显式启用并校验后执行 <code>-Preset Standard</code>。</li>
+            <li>安装 7-Zip、Clash Verge、Git、GitHub CLI、Chrome、Listary、Steam、Logseq、Notepad3、CC Switch、PixPin、PotPlayer、Thorium。</li>
+            <li>安装 LibreHardwareMonitor、CrystalDiskInfo、CrystalDiskMark、Sysinternals Suite 和独立 Process Explorer。</li>
+            <li>启用 VirtualMachinePlatform 与 Microsoft-Windows-Subsystem-Linux，并深测固件虚拟化、VT-x/AMD-V、SLAT、HypervisorPresent。</li>
+            <li><strong>重启门：</strong>保存 state.json；需要时登记登录续跑任务，重启后自动进入 Development。</li>
+            <li><strong>开发环境：</strong>检查 WSL2 门禁，更新 WSL、安装 Ubuntu，并只在检查通过后安装 Docker Desktop。</li>
+            <li>按 Profile 安装 AI、Developer 和 Engineering 组软件；Developer 组包含系统 Python、uv、Node.js、VS Code、Java、Go、Rust、GCC、Postman、DBeaver。</li>
+            <li>安装 OpenJDK 21、Go、Rustup、WinLibs MinGW；配置 <code>UV_PYTHON_PREFERENCE=system</code>，并关闭 conda base 自动激活。</li>
+            <li>输出失败清单、虚拟化报告、Python 策略和版本验证结果。</li>
           </ol>
 
           <div class="callout">
             <strong>日志位置</strong>
-            <code>C:\ProgramData\SetupNewPC\setup.log</code>。如果某个包失败，先查看日志中的 WinGet 退出码，再处理网络、Store 或权限问题。
+            <code>C:\ProgramData\SetupNewPC\setup.log</code>。状态、虚拟化和 Docker 报告位于同一目录。若某个包失败，先查看日志中的 WinGet 退出码，再处理网络、Store 或权限问题。
           </div>
         </section>
 
@@ -831,17 +844,22 @@ winget configure -f .\SetupNewPC.dsc.yaml</code></pre>
             <span class="section-index">05 / DSC</span>
             <div>
               <h2>DSC v3 路线</h2>
-              <p>YAML 把机器状态写成资源。软件包使用 <code>Microsoft.WinGet/Package</code>，交互或环境命令使用 <code>Microsoft.DSC.Transitional/RunCommandOnSet</code>。</p>
+              <p>YAML 把机器状态写成资源。由于 WSL/VMP 可能要求重启，配置拆成 WindowsBase 和 Development 两个文件；第二阶段的首个资源是虚拟化与重启门禁。</p>
             </div>
           </div>
 
           <h3>推荐流程</h3>
           <div class="code-block">
-            <div class="code-head"><span>WinGet 调用 DSC v3</span><button class="copy-button" type="button">复制</button></div>
-            <pre><code>winget configure validate -f .\SetupNewPC.dsc.yaml
-winget configure show -f .\SetupNewPC.dsc.yaml
-winget configure test -f .\SetupNewPC.dsc.yaml
-winget configure -f .\SetupNewPC.dsc.yaml
+            <div class="code-head"><span>WinGet 调用 DSC v3：两个阶段</span><button class="copy-button" type="button">复制</button></div>
+            <pre><code># 阶段 1：Windows 基础与 WSL/VMP 功能启用
+winget configure validate -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure show -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure -f .\SetupNewPC.WinBase.dsc.yaml
+
+# 如果输出 REBOOT REQUIRED，先重启
+winget configure validate -f .\SetupNewPC.Development.dsc.yaml
+winget configure show -f .\SetupNewPC.Development.dsc.yaml
+winget configure -f .\SetupNewPC.Development.dsc.yaml
 winget configure list</code></pre>
           </div>
 
@@ -852,8 +870,11 @@ winget configure list</code></pre>
 dsc --version
 dsc resource list Microsoft.WinGet/Package
 dsc resource list Microsoft.DSC.Transitional/RunCommandOnSet
-dsc config test --file .\SetupNewPC.dsc.yaml
-dsc config set --file .\SetupNewPC.dsc.yaml</code></pre>
+dsc config test --file .\SetupNewPC.WinBase.dsc.yaml
+dsc config set --file .\SetupNewPC.WinBase.dsc.yaml
+# 重启后
+dsc config test --file .\SetupNewPC.Development.dsc.yaml
+dsc config set --file .\SetupNewPC.Development.dsc.yaml</code></pre>
           </div>
 
           <div class="callout danger">
@@ -884,7 +905,8 @@ resources:
             <li><code>show</code> 展示解析后的资源，可用于确认包和依赖是否正确。</li>
             <li><code>test</code> 比较系统状态；命令资源没有测试能力时通常会显示需要执行。</li>
             <li><code>configure -f</code> 或 <code>dsc config set</code> 才真正应用资源。</li>
-            <li><code>dependsOn</code> 保证先决条件，例如 Git 先于 Git LFS、OpenJDK 先于 JavaHome。</li>
+            <li><code>dependsOn</code> 保证先决条件，例如 WSL 门禁先于 Docker、OpenJDK 先于 JavaHome。</li>
+            <li>WindowsBase 只启用功能并要求重启；Development 在重启后验证功能状态，再安装 Docker Desktop。</li>
           </ul>
         </section>
 
@@ -924,11 +946,11 @@ resources:
           <h3>删除或跳过软件</h3>
           <dl class="recipe">
             <dt>PS1</dt>
-            <dd>从对应的 <code>$basicApps</code>、<code>$specialApps</code>、<code>$aiApps</code> 或 <code>$engineeringApps</code> 数组中删除该 ID。</dd>
+            <dd>从 <code>$windowsBaseApps</code> 或 <code>$developmentApps</code> 数组中删除该 ID；重新运行前同时检查是否被其他步骤依赖。</dd>
             <dt>DSC</dt>
             <dd>删除以 <code>- type:</code> 开始的整个软件块。若其他资源通过 <code>dependsOn</code> 引用它，必须同时删除或改写依赖。</dd>
             <dt>跳过 WinUtil</dt>
-            <dd>PS1 使用 <code>-SkipWinUtil</code>；DSC 删除 <code>name: WinUtil</code> 的资源块。</dd>
+            <dd>PS1 使用 <code>-SkipWinUtil</code>，或默认不传 <code>-EnableWinUtil</code>；DSC 默认不执行 WinUtil。</dd>
             <dt>跳过 Store</dt>
             <dd>PS1 使用 <code>-SkipStoreApps</code>；DSC 删除 <code>name: ChatGPT</code> 的资源块。</dd>
           </dl>
@@ -966,9 +988,9 @@ resources:
           <h3>提交前校验</h3>
           <div class="code-block">
             <div class="code-head"><span>每次修改后至少执行</span><button class="copy-button" type="button">复制</button></div>
-            <pre><code>winget configure validate -f .\SetupNewPC.dsc.yaml
-winget configure show -f .\SetupNewPC.dsc.yaml
-git diff -- .\SetupNewPC.dsc.yaml .\SetupNewPC_Optimized.ps1</code></pre>
+            <pre><code>winget configure validate -f .\SetupNewPC.WinBase.dsc.yaml
+winget configure validate -f .\SetupNewPC.Development.dsc.yaml
+git diff -- .\SetupNewPC.WinBase.dsc.yaml .\SetupNewPC.Development.dsc.yaml .\SetupNewPC_Optimized.ps1</code></pre>
           </div>
         </section>
 
@@ -983,7 +1005,7 @@ git diff -- .\SetupNewPC.dsc.yaml .\SetupNewPC_Optimized.ps1</code></pre>
 
           <div class="callout danger">
             <strong>远程脚本风险</strong>
-            WinUtil 通过 <code>Invoke-RestMethod</code> 获取并执行远程内容。它适合可信任环境；如果不接受这种模式，请使用 <code>-SkipWinUtil</code>，或在 DSC 中删除 <code>name: WinUtil</code> 资源。
+            WinUtil 默认不执行。PS1 只有在显式使用 <code>-EnableWinUtil</code> 时才下载到本地、计算 SHA256，并在哈希校验或人工确认后执行 Standard preset；DSC 默认路径不包含该远程脚本。
           </div>
 
           <ul>
@@ -1013,10 +1035,12 @@ git diff -- .\SetupNewPC.dsc.yaml .\SetupNewPC_Optimized.ps1</code></pre>
                 <tr><td>找不到程序包</td><td>包 ID、源、网络</td><td>执行 <code>winget source update</code>，再用 <code>winget show --id ... -e</code> 检查</td></tr>
                 <tr><td>YAML 校验失败</td><td>缩进、冒号、Tab、资源字段</td><td>只使用空格，确认 <code>resources</code> 下每个条目从同列开始</td></tr>
                 <tr><td>Store 安装失败</td><td>账号、区域、Store 网络</td><td>登录 Store，或删除 ChatGPT 资源并使用 <code>-SkipStoreApps</code></td></tr>
-                <tr><td>WSL 或 Docker 失败</td><td>CPU 虚拟化、WSL 功能、重启状态</td><td>开启 BIOS/UEFI 虚拟化，执行 <code>wsl --update</code>，重启后补装</td></tr>
+                <tr><td>WSL 或 Docker 失败</td><td>Virtualization、VirtualMachinePlatform、WSL 功能、待重启状态</td><td>开启 BIOS/UEFI 虚拟化，确认两个功能为 Enabled，重启后执行 Development 阶段</td></tr>
+                <tr><td>Docker 被跳过</td><td>WSL 门禁或重启状态</td><td>检查 <code>C:\ProgramData\SetupNewPC\docker-readiness.json</code>，修复后重新执行 Development</td></tr>
+                <tr><td>Docker 用户组刚变更</td><td>docker-users 登录令牌</td><td>注销并重新登录，再执行 <code>docker info</code></td></tr>
                 <tr><td>脚本被阻止</td><td>执行策略、Zone.Identifier</td><td>使用 <code>Unblock-File</code> 和当前进程级 <code>Bypass</code></td></tr>
                 <tr><td>版本命令找不到</td><td>当前会话 PATH</td><td>关闭并打开新 PowerShell；仍失败时检查系统 PATH</td></tr>
-                <tr><td><code>test</code> 显示未满足</td><td>RunCommandOnSet 的测试能力</td><td>这是预期行为之一；审查具体资源，不要仅凭一条 pending 判断失败</td></tr>
+                <tr><td>DSC 第一阶段后直接执行第二阶段失败</td><td>REBOOT REQUIRED、EnablePending</td><td>先重启并确认 VMP 和 WSL 功能均为 Enabled，再运行 Development 配置</td></tr>
               </tbody>
             </table>
           </div>
@@ -1025,12 +1049,16 @@ git diff -- .\SetupNewPC.dsc.yaml .\SetupNewPC_Optimized.ps1</code></pre>
           <div class="code-block">
             <div class="code-head"><span>重启后在新终端执行</span><button class="copy-button" type="button">复制</button></div>
             <pre><code>python --version
+uv --version
+conda --version
 node --version
 java -version
 go version
 rustc --version
 gcc --version
 git lfs version
+wsl --version
+docker --version
 $env:JAVA_HOME</code></pre>
           </div>
         </section>
@@ -1078,12 +1106,18 @@ git push</code></pre>
             <div class="file-name">SetupNewPC_Optimized.ps1.txt</div>
             <div class="file-type">脚本文本副本</div>
             <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC_Optimized.ps1.txt">下载</a></div>
-            <div class="file-name">SetupNewPC.dsc.yaml</div>
-            <div class="file-type">DSC v3 配置</div>
-            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.dsc.yaml">下载</a></div>
-            <div class="file-name">SetupNewPC.dsc.yaml.txt</div>
-            <div class="file-type">DSC YAML 文本副本</div>
-            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.dsc.yaml.txt">下载</a></div>
+            <div class="file-name">SetupNewPC.WinBase.dsc.yaml</div>
+            <div class="file-type">DSC 阶段 1：Windows 基础</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.WinBase.dsc.yaml">下载</a></div>
+            <div class="file-name">SetupNewPC.WinBase.dsc.yaml.txt</div>
+            <div class="file-type">阶段 1 文本副本</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.WinBase.dsc.yaml.txt">下载</a></div>
+            <div class="file-name">SetupNewPC.Development.dsc.yaml</div>
+            <div class="file-type">DSC 阶段 2：开发环境</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.Development.dsc.yaml">下载</a></div>
+            <div class="file-name">SetupNewPC.Development.dsc.yaml.txt</div>
+            <div class="file-type">阶段 2 文本副本</div>
+            <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/SetupNewPC.Development.dsc.yaml.txt">下载</a></div>
             <div class="file-name">使用说明_PS1与DSC.pdf</div>
             <div class="file-type">完整 PDF 说明</div>
             <div><a href="https://github.com/styayur/windows-new-pc-setup/raw/main/使用说明_PS1与DSC.pdf">下载</a></div>

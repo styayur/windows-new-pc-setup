@@ -1,0 +1,216 @@
+﻿$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  description: Stage 1/2 - Windows base, diagnostics, WSL/VMP provisioning, and safe defaults. WinUtil is intentionally not executed by DSC; use the PS1 -EnableWinUtil workflow after hash review. Reboot if requested, then apply SetupNewPC.Development.dsc.yaml.
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+# ---------------------------------------------------------------------------
+# 1. Windows base
+# ---------------------------------------------------------------------------
+- type: Microsoft.WinGet/Package
+  name: HiBitUninstaller
+  properties:
+    id: HiBitSoftware.HiBitUninstaller
+    source: winget
+    useLatest: true
+  metadata:
+    description: Install HiBit Uninstaller before WinUtil.
+
+# WinUtil is intentionally omitted from the declarative default path.
+# The PS1 provides explicit opt-in (-EnableWinUtil), local download, SHA256
+# validation, and an interactive verification gate before execution.
+
+- type: Microsoft.WinGet/Package
+  name: SevenZip
+  properties:
+    id: 7zip.7zip
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: ClashVergeRev
+  properties:
+    id: ClashVergeRev.ClashVergeRev
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Git
+  properties:
+    id: Git.Git
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: GitHubCLI
+  properties:
+    id: GitHub.cli
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Chrome
+  properties:
+    id: Google.Chrome
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Listary
+  properties:
+    id: Bopsoft.Listary
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Steam
+  properties:
+    id: Valve.Steam
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Logseq
+  properties:
+    id: Logseq.Logseq
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Notepad3
+  properties:
+    id: Rizonesoft.Notepad3
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: CCSwitch
+  properties:
+    id: farion1231.CC-Switch
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: PixPin
+  properties:
+    id: PixPin.PixPin
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: PotPlayer
+  properties:
+    id: Daum.PotPlayer
+    source: winget
+    useLatest: true
+
+- type: Microsoft.WinGet/Package
+  name: Thorium
+  properties:
+    id: Alex313031.Thorium
+    source: winget
+    useLatest: true
+
+# ---------------------------------------------------------------------------
+# 2. Hardware and system diagnostics
+# ---------------------------------------------------------------------------
+- type: Microsoft.WinGet/Package
+  name: LibreHardwareMonitor
+  properties:
+    id: LibreHardwareMonitor.LibreHardwareMonitor
+    source: winget
+    useLatest: true
+  metadata:
+    description: Hardware sensors, fans, voltages, temperatures, and power monitoring.
+
+- type: Microsoft.WinGet/Package
+  name: CrystalDiskInfo
+  properties:
+    id: CrystalDewWorld.CrystalDiskInfo
+    source: winget
+    useLatest: true
+  metadata:
+    description: Disk health, SMART status, temperature, and power-on diagnostics.
+
+- type: Microsoft.WinGet/Package
+  name: CrystalDiskMark
+  properties:
+    id: CrystalDewWorld.CrystalDiskMark
+    source: winget
+    useLatest: true
+  metadata:
+    description: Sequential and random disk performance benchmarking.
+
+- type: Microsoft.WinGet/Package
+  name: SysinternalsSuite
+  properties:
+    id: Microsoft.Sysinternals.Suite
+    source: winget
+    useLatest: true
+  metadata:
+    description: Full Sysinternals Suite, including Process Explorer.
+
+- type: Microsoft.WinGet/Package
+  name: ProcessExplorer
+  properties:
+    id: Microsoft.Sysinternals.ProcessExplorer
+    source: winget
+    useLatest: true
+  metadata:
+    description: Standalone Process Explorer entry in addition to the suite.
+
+# ---------------------------------------------------------------------------
+# 3. Virtualization and WSL prerequisite gate
+# ---------------------------------------------------------------------------
+- type: Microsoft.DSC.Transitional/RunCommandOnSet
+  name: EnableWslPrerequisites
+  dependsOn:
+  - ProcessExplorer
+  properties:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+      "0": -NoProfile
+      "1": -ExecutionPolicy
+      "2": Bypass
+      "3": -Command
+      "4": |
+        $required = @('VirtualMachinePlatform', 'Microsoft-Windows-Subsystem-Linux')
+        foreach ($name in $required) {
+          $feature = Get-WindowsOptionalFeature -Online -FeatureName $name -ErrorAction Stop
+          if ($feature.State -notin @('Enabled', 'EnablePending')) {
+            Enable-WindowsOptionalFeature -Online -FeatureName $name -All -NoRestart -ErrorAction Stop | Out-Null
+          }
+        }
+
+        $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+        $computer = Get-CimInstance Win32_ComputerSystem
+        $hardwareBlocked = $computer.HypervisorPresent -eq $false -and
+          $cpu.VirtualizationFirmwareEnabled -eq $false -and
+          $cpu.VMMonitorModeExtensions -eq $false
+        if ($hardwareBlocked) {
+          Write-Warning 'CPU virtualization is disabled in firmware. Enable VT-x/AMD-V in BIOS/UEFI.'
+        }
+
+        $pending = @()
+        if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') {
+          $pending += 'Component Based Servicing'
+        }
+        if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') {
+          $pending += 'Windows Update'
+        }
+        $sm = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' -ErrorAction SilentlyContinue
+        if ($sm.PendingFileRenameOperations) { $pending += 'Pending file rename' }
+
+        if ($pending.Count -gt 0) {
+          Write-Host "REBOOT REQUIRED: $($pending -join ', ')"
+          Write-Host 'After reboot, apply SetupNewPC.Development.dsc.yaml.'
+        } else {
+          Write-Host 'WSL/VMP prerequisites are active; no reboot is currently required.'
+        }
+      treatAsArray: true
+  metadata:
+    winget:
+      securityContext: elevated
+    description: Enable VirtualMachinePlatform and Microsoft-Windows-Subsystem-Linux without automatic reboot.
