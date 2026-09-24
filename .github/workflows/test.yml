@@ -6,14 +6,17 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  windows-powershell:
     runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shell: [powershell, pwsh]
     steps:
       - uses: actions/checkout@v4
-      - name: Run offline regression suite
-        shell: ${{ matrix.shell }}
+      - name: Run regression suite on Windows PowerShell 5.1
+        shell: powershell
+        run: ./tests/Run-Tests.ps1
+  powershell-core:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run regression suite on PowerShell 7
+        shell: pwsh
         run: ./tests/Run-Tests.ps1
