@@ -1,0 +1,4 @@
+# Local machine-specific configuration and generated output
+config/my-*.json
+*.log
+*.tmp

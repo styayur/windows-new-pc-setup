@@ -1,4 +1,4 @@
-# Compatibility wrapper.
+﻿# Compatibility wrapper.
 # The active implementation lives in SetupNewPC_Optimized.ps1.
 $target = Join-Path $PSScriptRoot 'SetupNewPC_Optimized.ps1'
 if (-not (Test-Path -LiteralPath $target)) {

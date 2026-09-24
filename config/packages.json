@@ -1,0 +1,423 @@
+{
+  "SchemaVersion": 1,
+  "Packages": [
+    {
+      "Key": "ClashVerge",
+      "Name": "Clash Verge Rev",
+      "Id": "ClashVergeRev.ClashVergeRev",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "PowerShell7",
+      "Name": "PowerShell 7",
+      "Id": "Microsoft.PowerShell",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Core",
+      "Groups": [
+        "Core"
+      ]
+    },
+    {
+      "Key": "HiBitUninstaller",
+      "Name": "HiBit Uninstaller",
+      "Id": "HiBitSoftware.HiBitUninstaller",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "SevenZip",
+      "Name": "7-Zip",
+      "Id": "7zip.7zip",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Core",
+      "Groups": [
+        "Core"
+      ]
+    },
+    {
+      "Key": "Git",
+      "Name": "Git",
+      "Id": "Git.Git",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Core",
+      "Groups": [
+        "Core"
+      ]
+    },
+    {
+      "Key": "GitHubCLI",
+      "Name": "GitHub CLI",
+      "Id": "GitHub.cli",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Core",
+      "Groups": [
+        "Core"
+      ]
+    },
+    {
+      "Key": "Chrome",
+      "Name": "Google Chrome",
+      "Id": "Google.Chrome",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Core",
+      "Groups": [
+        "Core"
+      ]
+    },
+    {
+      "Key": "Listary",
+      "Name": "Listary",
+      "Id": "Bopsoft.Listary",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "CCSwitch",
+      "Name": "CC Switch",
+      "Id": "farion1231.CC-Switch",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "Notepad3",
+      "Name": "Notepad3",
+      "Id": "Rizonesoft.Notepad3",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "PixPin",
+      "Name": "PixPin",
+      "Id": "PixPin.PixPin",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "LibreHardwareMonitor",
+      "Name": "LibreHardwareMonitor",
+      "Id": "LibreHardwareMonitor.LibreHardwareMonitor",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "CrystalDiskInfo",
+      "Name": "CrystalDiskInfo",
+      "Id": "CrystalDewWorld.CrystalDiskInfo",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "CrystalDiskMark",
+      "Name": "CrystalDiskMark",
+      "Id": "CrystalDewWorld.CrystalDiskMark",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "SysinternalsSuite",
+      "Name": "Sysinternals Suite",
+      "Id": "Microsoft.Sysinternals.Suite",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "ProcessExplorer",
+      "Name": "Process Explorer",
+      "Id": "Microsoft.Sysinternals.ProcessExplorer",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "Steam",
+      "Name": "Steam",
+      "Id": "Valve.Steam",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "Logseq",
+      "Name": "Logseq",
+      "Id": "Logseq.Logseq",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "PotPlayer",
+      "Name": "PotPlayer",
+      "Id": "Daum.PotPlayer",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "Thorium",
+      "Name": "Thorium",
+      "Id": "Alex313031.Thorium",
+      "Source": "winget",
+      "Stage": "WindowsBase",
+      "Category": "Personal",
+      "Groups": [
+        "Personal"
+      ]
+    },
+    {
+      "Key": "VSCode",
+      "Name": "Visual Studio Code",
+      "Id": "Microsoft.VisualStudioCode",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "NodeJS",
+      "Name": "Node.js LTS",
+      "Id": "OpenJS.NodeJS.LTS",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "SystemPython",
+      "Name": "System Python 3.13",
+      "Id": "Python.Python.3.13",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "uv",
+      "Name": "uv",
+      "Id": "astral-sh.uv",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "Postman",
+      "Name": "Postman",
+      "Id": "Postman.Postman",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "DBeaver",
+      "Name": "DBeaver",
+      "Id": "DBeaver.DBeaver.Community",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "OpenJDK21",
+      "Name": "Microsoft OpenJDK 21",
+      "Id": "Microsoft.OpenJDK.21",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "Go",
+      "Name": "Go",
+      "Id": "GoLang.Go",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "Rustup",
+      "Name": "Rustup",
+      "Id": "Rustlang.Rustup",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "MinGW",
+      "Name": "MinGW-w64 GCC",
+      "Id": "BrechtSanders.WinLibs.POSIX.UCRT",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Developer",
+      "Groups": [
+        "Developer"
+      ]
+    },
+    {
+      "Key": "ChatGPT",
+      "Name": "ChatGPT Desktop",
+      "Id": "9PLM9XGG6VKS",
+      "Source": "msstore",
+      "Stage": "Development",
+      "Category": "AI",
+      "Groups": [
+        "AI"
+      ]
+    },
+    {
+      "Key": "CodexCLI",
+      "Name": "OpenAI Codex",
+      "Id": "OpenAI.Codex",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "AI",
+      "Groups": [
+        "AI"
+      ]
+    },
+    {
+      "Key": "Anaconda",
+      "Name": "Anaconda",
+      "Id": "Anaconda.Anaconda3",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    },
+    {
+      "Key": "RProject",
+      "Name": "R",
+      "Id": "RProject.R",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    },
+    {
+      "Key": "RStudio",
+      "Name": "RStudio",
+      "Id": "Posit.RStudio",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    },
+    {
+      "Key": "KiCad",
+      "Name": "KiCad",
+      "Id": "KiCad.KiCad",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    },
+    {
+      "Key": "FreeCAD",
+      "Name": "FreeCAD",
+      "Id": "FreeCAD.FreeCAD",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    },
+    {
+      "Key": "MobaXterm",
+      "Name": "MobaXterm",
+      "Id": "Mobatek.MobaXterm",
+      "Source": "winget",
+      "Stage": "Development",
+      "Category": "Engineering",
+      "Groups": [
+        "Engineering"
+      ]
+    }
+  ]
+}
