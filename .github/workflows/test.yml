@@ -18,7 +18,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run regression suite on Windows PowerShell 5.1
         shell: powershell
         run: ./tests/Run-Tests.ps1
@@ -26,7 +26,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run regression suite on PowerShell 7
         shell: pwsh
         run: ./tests/Run-Tests.ps1
