@@ -42,7 +42,7 @@ jobs:
           $archive = "windows-new-pc-setup-$version.zip"
           Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
           Get-FileHash -Algorithm SHA256 $archive | ForEach-Object { "$($_.Hash.ToLower())  $archive" } | Set-Content -Encoding utf8NoBOM SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version || github.ref_name }}
           generate_release_notes: true
