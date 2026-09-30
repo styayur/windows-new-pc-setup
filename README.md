@@ -1,6 +1,6 @@
 # Windows New PC Setup
 
-可配置、可预览、可重复执行的 Windows 11 新机装机脚本。支持 Windows PowerShell 5.1 和 PowerShell 7，使用 WinGet 安装缺少的软件；WSL、Docker、WinUtil 和环境变量配置均为显式选项。
+可配置、可预览、可重复执行的 Windows 11 新机装机脚本。**唯一推荐入口是 `SetupNewPC_Optimized.ps1`。** `Setupnewpc.ps1` 仅为兼容包装；`Install-Applications.WithConfirmation.ps1` 是逐项确认模式；`legacy/` 只作历史参考。支持 Windows PowerShell 5.1 和 PowerShell 7，使用 WinGet 安装缺少的软件；WSL、Docker、WinUtil 和环境变量配置均为显式选项。
 
 下载：[最新 Release](https://github.com/styayur/windows-new-pc-setup/releases/latest) · [v2.0.0 升级说明](docs/releases/v2.0.0.md)。优先下载 Release 中的完整 ZIP，并用附带的 SHA256 文件校验。
 
@@ -172,6 +172,14 @@ pwsh -NoProfile -File .\tests\Run-Tests.ps1
 GitHub Actions 在两种 PowerShell 上运行相同回归测试。测试覆盖预览、配置校验、命令行转义、超时、WinGet 失败/重试/重启、用户跳过、原子状态、身份隔离与重复运行。真实安装、重启及 BIOS/WSL/Docker 的端到端验收需在可恢复 Windows 11 虚拟机执行，见 [tests/VM-CHECKLIST.md](tests/VM-CHECKLIST.md)。
 
 实现依据：[WinGet install](https://learn.microsoft.com/windows/package-manager/winget/install)、[list](https://learn.microsoft.com/windows/package-manager/winget/list)、[退出码](https://github.com/microsoft/winget-cli/blob/master/doc/windows/package-manager/winget/returnCodes.md)、[WSL 命令](https://learn.microsoft.com/windows/wsl/basic-commands)。
+
+## 参与开发与反馈
+
+- 开发环境、canonical entrypoint 与测试要求见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 脚本边界见 [docs/script-boundaries.md](docs/script-boundaries.md)。
+- 安全问题不要开公开 Issue，请按 [SECURITY.md](SECURITY.md) 私下报告。
+- Discord：[加入社区](https://discord.gg/wA2xy6VPK)，用于快速交流、反馈和项目讨论；不是 SLA 支持渠道。
+- Release 使用 SemVer 与 `vX.Y.Z` tag，发布完整仓库 ZIP 和 `SHA256SUMS.txt`。维护者负责发布，贡献者不需要创建 tag。
 
 ## 许可证
 

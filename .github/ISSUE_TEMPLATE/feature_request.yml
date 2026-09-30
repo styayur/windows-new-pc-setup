@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a scoped setup or package-catalog improvement.
+title: '[Feature]: '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Expected system impact
+      options:
+        - Preview-only or catalog metadata
+        - Package installation
+        - User environment/configuration
+        - WSL, virtualization, or Docker
+        - Privileged or potentially destructive change
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and rollback
+      description: Explain -WhatIf behaviour, administrator requirements, failure modes, and rollback.
+    validations:
+      required: true

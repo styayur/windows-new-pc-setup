@@ -1,13 +1,22 @@
 name: PowerShell regression tests
+
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows-powershell:
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Run regression suite on Windows PowerShell 5.1
@@ -15,6 +24,7 @@ jobs:
         run: ./tests/Run-Tests.ps1
   powershell-core:
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Run regression suite on PowerShell 7
