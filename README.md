@@ -1,8 +1,23 @@
+<div align="center">
+
+<img src="docs/assets/brand/logo-mark.svg" width="84" alt="Windows New PC Setup logo" />
+
 # Windows New PC Setup
 
-可配置、可预览、可重复执行的 Windows 11 新机装机脚本。**唯一推荐入口是 `SetupNewPC_Optimized.ps1`。** `Setupnewpc.ps1` 仅为兼容包装；`Install-Applications.WithConfirmation.ps1` 是逐项确认模式；`legacy/` 只作历史参考。支持 Windows PowerShell 5.1 和 PowerShell 7，使用 WinGet 安装缺少的软件；WSL、Docker、WinUtil 和环境变量配置均为显式选项。
+**Previewable Windows 11 provisioning with PowerShell and WinGet.**
 
-下载：[最新 Release](https://github.com/styayur/windows-new-pc-setup/releases/latest) · [v2.0.0 升级说明](docs/releases/v2.0.0.md)。优先下载 Release 中的完整 ZIP，并用附带的 SHA256 文件校验。
+[Quick Start](#快速开始) · [Documentation](docs/script-boundaries.md) · [Releases](https://github.com/styayur/windows-new-pc-setup/releases/latest) · [Issues](https://github.com/styayur/windows-new-pc-setup/issues)
+
+[![release](https://img.shields.io/github/v/release/styayur/windows-new-pc-setup)](https://github.com/styayur/windows-new-pc-setup/releases/latest)
+[![CI](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml/badge.svg)](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5391FE?logo=powershell&logoColor=white)]()
+[![Windows 11](https://img.shields.io/badge/Windows%2011-0078D6?logo=windows&logoColor=white)]()
+[![WinGet](https://img.shields.io/badge/WinGet-0078D4?logo=windows&logoColor=white)]()
+
+**Canonical entrypoint:** `SetupNewPC_Optimized.ps1`
+
+</div>
 
 ## 快速开始
 

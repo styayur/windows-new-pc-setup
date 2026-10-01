@@ -1,0 +1,5 @@
+<svg width="128" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="windows-new-pc-setup">
+  <rect width="128" height="96" rx="20" fill="#0f172a"/>
+  <rect x="3.5" y="3.5" width="89" height="89" rx="17.5" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <rect x="18" y="18" width="60" height="60" rx="12" fill="none" stroke="#38bdf8" stroke-width="4"/><path d="M30 40 L42 50 L30 60" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M48 60 H66" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/><rect x="30" y="28" width="8" height="6" rx="2" fill="#fbbf24"/>
+</svg>
