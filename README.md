@@ -6,6 +6,8 @@
 
 **Previewable Windows 11 provisioning with PowerShell and WinGet.**
 
+**Status:** 🟢 Stable
+
 [Quick Start](#快速开始) · [Documentation](docs/script-boundaries.md) · [Releases](https://github.com/styayur/windows-new-pc-setup/releases/latest) · [Issues](https://github.com/styayur/windows-new-pc-setup/issues)
 
 [![release](https://img.shields.io/github/v/release/styayur/windows-new-pc-setup)](https://github.com/styayur/windows-new-pc-setup/releases/latest)
@@ -16,6 +18,8 @@
 [![WinGet](https://img.shields.io/badge/WinGet-0078D4?logo=windows&logoColor=white)]()
 
 **Canonical entrypoint:** `SetupNewPC_Optimized.ps1`
+
+![Previewable provisioning plan](docs/assets/preview.png)
 
 </div>
 
@@ -187,6 +191,24 @@ pwsh -NoProfile -File .\tests\Run-Tests.ps1
 GitHub Actions 在两种 PowerShell 上运行相同回归测试。测试覆盖预览、配置校验、命令行转义、超时、WinGet 失败/重试/重启、用户跳过、原子状态、身份隔离与重复运行。真实安装、重启及 BIOS/WSL/Docker 的端到端验收需在可恢复 Windows 11 虚拟机执行，见 [tests/VM-CHECKLIST.md](tests/VM-CHECKLIST.md)。
 
 实现依据：[WinGet install](https://learn.microsoft.com/windows/package-manager/winget/install)、[list](https://learn.microsoft.com/windows/package-manager/winget/list)、[退出码](https://github.com/microsoft/winget-cli/blob/master/doc/windows/package-manager/winget/returnCodes.md)、[WSL 命令](https://learn.microsoft.com/windows/wsl/basic-commands)。
+
+## Roadmap
+
+### Current
+
+- Previewable Windows 11 provisioning with PowerShell, WinGet, and optional DSC v3.
+
+### Next
+
+- Maintain the software manifest and improve WinGet failure/retry handling.
+
+### Future
+
+- More curated configuration profiles and broader DSC coverage.
+
+### Not planned
+
+- Silent installs that bypass user confirmation, or BIOS-level changes.
 
 ## 参与开发与反馈
 
