@@ -1,0 +1,9 @@
+[commands.syntax]
+program = "pwsh"
+args = ["-NoProfile", "-File", "./tests/Run-Tests.ps1"]
+timeout_secs = 900
+
+[commands.test]
+program = "pwsh"
+args = ["-NoProfile", "-File", "./tests/Run-Tests.ps1"]
+timeout_secs = 900
