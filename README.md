@@ -1,7 +1,3 @@
-<div align="center">
-
-<img src="docs/assets/brand/logo-mark.svg" width="84" alt="Windows New PC Setup logo" />
-
 # Windows New PC Setup
 
 **Previewable Windows 11 provisioning with PowerShell and WinGet.**
@@ -13,15 +9,11 @@
 [![release](https://img.shields.io/github/v/release/styayur/windows-new-pc-setup)](https://github.com/styayur/windows-new-pc-setup/releases/latest)
 [![CI](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml/badge.svg)](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![PowerShell](https://img.shields.io/badge/PowerShell-5391FE?logo=powershell&logoColor=white)]()
-[![Windows 11](https://img.shields.io/badge/Windows%2011-0078D6?logo=windows&logoColor=white)]()
-[![WinGet](https://img.shields.io/badge/WinGet-0078D4?logo=windows&logoColor=white)]()
 
 **Canonical entrypoint:** `SetupNewPC_Optimized.ps1`
 
 ![Previewable provisioning plan](docs/assets/preview.png)
 
-</div>
 
 ## 快速开始
 
