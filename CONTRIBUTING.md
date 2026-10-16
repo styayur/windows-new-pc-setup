@@ -27,3 +27,13 @@ The regression suite must cover parser validation, `-WhatIf`, configuration sche
 - Do not silently download scripts or installers outside WinGet/MSStore.
 
 Maintainers perform releases. Security issues must follow [SECURITY.md](SECURITY.md), not the public issue tracker.
+
+
+## Verification commands
+
+```powershell
+powershell.exe -NoProfile -File ./tests/Run-Tests.ps1
+pwsh -NoProfile -File ./tests/Run-Tests.ps1
+```
+
+Both existing CI jobs and CodeForge regression remain in place. Do not bypass execution policy for the tests. Record real installation/reboot evidence separately using [the VM checklist](tests/VM-CHECKLIST.md); mocked tests do not certify a release for every machine.

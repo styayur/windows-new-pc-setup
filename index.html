@@ -570,6 +570,7 @@
 <p>WINDOWS NEW PC SETUP · v2</p><h1>一份清单，复用到下一台电脑。</h1>
 <p>先预览，再执行。软件按需安装，失败可重试，重启后重新核验。支持 Windows PowerShell 5.1 与 PowerShell 7。</p>
 <p><a href="https://github.com/styayur/windows-new-pc-setup">查看仓库与完整说明</a> · <a href="https://github.com/styayur/windows-new-pc-setup/archive/refs/heads/main.zip">下载完整仓库 ZIP</a></p>
+<p><strong>版本说明：</strong>当前源码为 v2 流程；公开最新版仍是 v1.1.0，v2.0.0 尚为草稿。旧版默认行为不同，请勿混用。<a href="https://github.com/styayur/windows-new-pc-setup/blob/main/docs/operations.md">下载校验、恢复与移除说明</a>。</p>
 <h2>1. 查看安装计划</h2><p>解压整个仓库，保留 src 和 config 目录。在 PowerShell 中运行：</p>
 <pre><code>.\SetupNewPC_Optimized.ps1 -Profile Developer -WhatIf | ConvertTo-Json -Depth 8</code></pre>
 <h2>2. 执行已审阅的清单</h2><p>需要 Windows 11、64 位管理员 PowerShell 和 WinGet 1.8+。使用当前 Windows 用户的管理员终端：</p>
@@ -584,6 +585,7 @@
 
 # 使用自己的清单
 .\SetupNewPC_Optimized.ps1 -ConfigPath .\config\my-packages.json -WhatIf</code></pre>
+<p>没有自动回滚或卸载；成功安装与系统修改会保留。真实装机前准备可恢复备份，删除脚本或状态目录不会撤销系统变更。</p>
 <h2>重启与恢复</h2><p>返回码 3010 表示需要重启。保存工作、手动重启，再执行同一条命令。不会创建登录续跑任务；每次都会检查真实安装情况。</p>
 <p>状态和日志位于 %LOCALAPPDATA%\SetupNewPC\v2\&lt;配置哈希&gt;。失败退出 1，参数或前置检查失败退出 2，用户跳过退出 3。</p>
 <h2>维护说明</h2><p>当前文档以 <a href="https://github.com/styayur/windows-new-pc-setup/blob/main/README.md">README</a> 为准。旧 DSC 和 PDF 已移入 legacy，仅供历史参考；旧脚本 TXT 镜像已停用。不能只下载单个 PS1。</p>

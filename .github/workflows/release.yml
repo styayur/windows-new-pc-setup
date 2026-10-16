@@ -38,7 +38,7 @@ jobs:
           if (-not $version) { $version = '${{ github.ref_name }}' }
           $stage = Join-Path $env:RUNNER_TEMP 'windows-new-pc-setup'
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item SetupNewPC_Optimized.ps1,Setupnewpc.ps1,Install-Applications.WithConfirmation.ps1,README.md,LICENSE,config,src,examples,docs -Destination $stage -Recurse
+          Copy-Item SetupNewPC_Optimized.ps1,Setupnewpc.ps1,Install-Applications.WithConfirmation.ps1,README.md,LICENSE,CONTRIBUTING.md,SECURITY.md,config,src,examples,docs,tests,legacy -Destination $stage -Recurse
           $archive = "windows-new-pc-setup-$version.zip"
           Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
           Get-FileHash -Algorithm SHA256 $archive | ForEach-Object { "$($_.Hash.ToLower())  $archive" } | Set-Content -Encoding utf8NoBOM SHA256SUMS.txt
