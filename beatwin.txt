@@ -17,7 +17,7 @@
 # ============================================================================
 
 $WhinsetVersion = 'v2.0.0-rc.1'
-$WhinsetArchiveSha256 = '1fb73b0ef98a0a6506933fa0f86e91ac861bef5de2303de29c3602c142501513'
+$WhinsetArchiveSha256 = '32778a1735db7c0c6b3e4667fc754ac238fa8a9fada5b17eed7623093181709e'
 $WhinsetAssetUrl = 'https://github.com/styayur/whinset/releases/download/v2.0.0-rc.1/Whinset-v2.0.0-rc.1.zip'
 
 # Default is safe: download, verify and show a plan. After reviewing it, change

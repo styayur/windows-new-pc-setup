@@ -27,7 +27,7 @@ try {
         $source = Join-Path $root $directory
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $stage $directory) -Recurse -Force }
     }
-    $textExtensions = @('.ps1','.psm1','.psd1','.json','.md','.yml','.yaml','.html','.svg','.toml','.txt','.cmd')
+    $textExtensions = @('.ps1','.psm1','.psd1','.py','.json','.md','.yml','.yaml','.html','.svg','.toml','.txt','.cmd')
     foreach ($file in @(Get-ChildItem -LiteralPath $stage -File -Recurse)) {
         $extension = $file.Extension.ToLowerInvariant()
         $isNamedText = $file.Name -in @('LICENSE','.gitignore')

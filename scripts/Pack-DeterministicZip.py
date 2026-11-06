@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 
 TEXT_EXTENSIONS = {
-    ".ps1", ".psm1", ".psd1", ".json", ".md", ".yml", ".yaml",
+    ".ps1", ".psm1", ".psd1", ".py", ".json", ".md", ".yml", ".yaml",
     ".html", ".svg", ".toml", ".txt", ".cmd",
 }
 TEXT_NAMES = {"LICENSE", ".gitignore"}
