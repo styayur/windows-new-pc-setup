@@ -57,6 +57,7 @@ jobs:
         shell: pwsh
         run: |
           ./whinset.ps1 version -Json | ConvertFrom-Json | Out-Null
+          $PSNativeCommandUseErrorActionPreference = $false
           $doctor = ./whinset.ps1 doctor -Json
           $doctorCode = $LASTEXITCODE
           $doctor | ConvertFrom-Json | Out-Null
