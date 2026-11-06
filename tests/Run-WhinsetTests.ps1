@@ -323,9 +323,9 @@ try {
         if (-not (Test-Path -LiteralPath $bootstrapPath)) { Write-Output 'SKIP bootstrap file is a release asset outside the archive'; return }
         $bootstrapPath = Join-Path $root 'beatwin.txt'
         $manifest = Get-WhinsetBootstrapManifest -Path $bootstrapPath
-        Assert ($manifest.Version -eq 'v2.0.0-rc.1')
+        Assert ($manifest.Version -eq 'v2.0.0-rc.2')
         Assert ($manifest.Sha256 -match '^[0-9a-f]{64}$')
-        Assert ($manifest.AssetUrl -like '*releases/download/v2.0.0-rc.1/*')
+        Assert ($manifest.AssetUrl -like '*releases/download/v2.0.0-rc.2/*')
         Assert ($manifest.Text -notmatch '(?i)Invoke[-]Expression|[-]EncodedCommand|FromBase64String|/main/')
         Assert ($manifest.Text -like '*UAC*')
         Assert ($manifest.Text -like '*No automatic rollback*')
@@ -343,7 +343,7 @@ try {
         $fakeHash = (Get-FileHash -LiteralPath $fake -Algorithm SHA256).Hash.ToLowerInvariant()
         $bootstrapArgs = @{
             TemplatePath = Join-Path $root 'bootstrap/beatwin.template.txt'
-            Version = 'v2.0.0-rc.1'
+            Version = 'v2.0.0-rc.2'
             Sha256 = $fakeHash
             OutputPath = $generated
         }
@@ -404,13 +404,13 @@ try {
             $hostExe = (Get-Process -Id $PID).Path
             $json = & $hostExe -NoLogo -NoProfile -File (Join-Path $installed.InstallRoot 'whinset.ps1') version -Json
             Assert ($LASTEXITCODE -eq 0)
-            Assert (($json | ConvertFrom-Json).Version -eq '2.0.0-rc.1')
+            Assert (($json | ConvertFrom-Json).Version -eq '2.0.0-rc.2')
             $oldPath = $env:PATH
             try {
                 $env:PATH = $installed.InstallRoot + ';' + $env:PATH
                 $commandJson = & $hostExe -NoLogo -NoProfile -Command '& whinset version -Json'
                 Assert ($LASTEXITCODE -eq 0)
-                Assert (($commandJson | ConvertFrom-Json).Version -eq '2.0.0-rc.1')
+                Assert (($commandJson | ConvertFrom-Json).Version -eq '2.0.0-rc.2')
                 $s = 'whinset '
                 $scriptCommands = @(TabExpansion2 $s $s.Length).CompletionMatches.CompletionText
                 Assert ($scriptCommands -contains 'plan')

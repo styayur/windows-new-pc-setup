@@ -9,6 +9,8 @@
 # - Administrator authorization uses normal Windows UAC. There is no bypass.
 # - Every elevated operation is grouped into one elevated worker when the plan
 #   requires administrator access. Declining UAC stops the elevated phase.
+# - Different-user UAC credentials are unsupported. WSL distribution registration
+#   and Docker daemon checks stay in the intended original user's process.
 # - Logs and state are preserved under %LOCALAPPDATA%\Whinset\v2. The temporary
 #   download/extract folder is removed after the command finishes.
 # - No automatic rollback is claimed. Review the published plan, package licenses

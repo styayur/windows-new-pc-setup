@@ -65,8 +65,26 @@ try {
     $sumsPath = Join-Path $OutputDirectory 'SHA256SUMS.txt'
     $lines = @("$archiveHash  $archiveName")
     if ($bootstrapHash) { $lines += "$bootstrapHash  beatwin.txt" }
+    $acceptancePath = $null
+    $acceptanceSource = Join-Path $root "docs/acceptance/windows-$Version.json"
+    if (Test-Path -LiteralPath $acceptanceSource) {
+        $matrix = Read-WhinsetJsonFile -Path $acceptanceSource
+        if ($matrix.Release -ne $Version -or $matrix.StableEligible -ne $false) { throw 'Acceptance matrix release policy is invalid.' }
+        foreach ($entry in $matrix.Checks) {
+            if ($entry.Status -notin @('PASS','FAIL','NOT RUN','BLOCKED','NOT APPLICABLE')) { throw "Invalid acceptance status: $($entry.Id)" }
+            if ($entry.Status -eq 'PASS' -and -not $entry.Evidence) { throw "PASS requires evidence: $($entry.Id)" }
+        }
+        $acceptancePath = Join-Path $OutputDirectory 'acceptance-matrix.json'
+        Copy-Item -LiteralPath $acceptanceSource -Destination $acceptancePath -Force
+        $lines += "$(Get-WhinsetHashFile $acceptancePath)  acceptance-matrix.json"
+    }
     Write-WhinsetTextFile -Path $sumsPath -Text (($lines -join [Environment]::NewLine) + [Environment]::NewLine)
-    return [pscustomobject][ordered]@{ Version=$Version; ArchivePath=$archivePath; ArchiveSha256=$archiveHash; BootstrapPath=$(if (Test-Path -LiteralPath $bootstrapPath) { $bootstrapPath } else { $null }); BootstrapSha256=$bootstrapHash; SumsPath=$sumsPath; BootstrapIntegrity=$integrity }
+    $bootstrapOutput = $null
+    if (Test-Path -LiteralPath $bootstrapPath) {
+        $bootstrapOutput = Join-Path $OutputDirectory 'beatwin.txt'
+        Copy-Item -LiteralPath $bootstrapPath -Destination $bootstrapOutput -Force
+    }
+    return [pscustomobject][ordered]@{ Version=$Version; ArchivePath=$archivePath; ArchiveSha256=$archiveHash; BootstrapPath=$bootstrapOutput; BootstrapSha256=$bootstrapHash; SumsPath=$sumsPath; AcceptancePath=$acceptancePath; BootstrapIntegrity=$integrity }
 } finally {
     if (Test-Path -LiteralPath $stage) {
         $resolvedStage = [IO.Path]::GetFullPath($stage)
