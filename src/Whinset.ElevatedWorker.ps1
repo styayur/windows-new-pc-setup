@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 try {
     Import-Module (Join-Path $PSScriptRoot 'Whinset.psd1') -Force -ErrorAction Stop
-    $result = Invoke-WhinsetElevatedWorker -PlanPath $PlanPath -PlanHash $PlanHash -Nonce $Nonce
+    $result = & (Get-Module Whinset) { param($p,$h,$n) Invoke-WhinsetElevatedWorker -PlanPath $p -PlanHash $h -Nonce $n } $PlanPath $PlanHash $Nonce
     exit ([int]$result.ExitCode)
 } catch {
     Write-Error $_.Exception.Message

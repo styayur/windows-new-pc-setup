@@ -63,6 +63,11 @@ function Invoke-WhinsetPackageOperation {
     $lastError = ''
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         if ($attempt -gt 1) {
+            $recheck = Test-WhinsetPackageInstalled -Package $package -AcceptAgreements
+            if ($recheck.Installed -and ($package.VersionPolicy -ne 'pinned' -or $recheck.VersionVerified)) {
+                return (New-WhinsetOperationResult -Status 'AlreadyInstalled' -Detail 'Verified after an interrupted installer attempt; no duplicate install was started.' -ExitCode 0)
+            }
+            if ($recheck.Error) { return (New-WhinsetOperationResult -Status 'Failed' -Error $recheck.Error -ExitCode $recheck.ExitCode) }
             Set-WhinsetOperationRecord -State $State -OperationId $Operation.Id -Status 'Running' -Detail "Retry attempt $attempt of $maxAttempts" -IncrementAttempt
             Save-WhinsetRunState -State $State -Paths $Paths
         }
@@ -182,6 +187,10 @@ function Invoke-WhinsetWslRuntimeOperation {
     $update = Invoke-WhinsetExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--update') -TimeoutSeconds 900
     if (Test-WhinsetWingetRebootCode -ExitCode $update.ExitCode) { return (New-WhinsetOperationResult -Status 'AwaitingReboot' -Detail 'wsl --update requested a restart.' -ExitCode $update.ExitCode -RebootRequired) }
     if (-not $update.Success) { return (New-WhinsetOperationResult -Status 'Failed' -Error "wsl --update failed: $($update.Error) $($update.Output)" -ExitCode $update.ExitCode) }
+    return (New-WhinsetOperationResult -Status 'Succeeded' -Detail 'Machine WSL runtime updated; distribution registration remains in the original user phase.' -ExitCode 0)
+}
+
+function Invoke-WhinsetWslDistributionOperation {
     $default = Invoke-WhinsetExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--set-default-version','2') -TimeoutSeconds 60
     if (-not $default.Success) { return (New-WhinsetOperationResult -Status 'Failed' -Error "wsl --set-default-version 2 failed: $($default.Error) $($default.Output)" -ExitCode $default.ExitCode) }
     $report = Get-WhinsetWslDistros
@@ -208,7 +217,7 @@ function Invoke-WhinsetWslRuntimeOperation {
 
 function Invoke-WhinsetDockerOperation {
     param([Parameter(Mandatory)]$Plan, [Parameter(Mandatory)]$State, [Parameter(Mandatory)]$Operation, [Parameter(Mandatory)]$Paths)
-    $package = [pscustomobject][ordered]@{ Key='Docker'; Id='Docker.DockerDesktop'; Source='winget'; Architecture='auto'; Scope='auto'; Version=$null; VersionPolicy='latest' }
+    $package = [pscustomobject][ordered]@{ Key='Docker'; Id='Docker.DockerDesktop'; Source='winget'; Architecture='auto'; Scope='machine'; Version=$null; VersionPolicy='latest' }
     $probe = Test-WhinsetPackageInstalled -Package $package -AcceptAgreements
     if ($probe.Error) { return (New-WhinsetOperationResult -Status 'Failed' -Error $probe.Error -ExitCode $probe.ExitCode) }
     if (-not $probe.Installed) {
@@ -230,6 +239,11 @@ function Invoke-WhinsetDockerOperation {
         }
         if (-not (Test-WhinsetPackageInstalled -Package $package -AcceptAgreements).Installed) { return (New-WhinsetOperationResult -Status 'Failed' -Error $lastError) }
     }
+    return (New-WhinsetOperationResult -Status 'Succeeded' -Detail 'Machine Docker Desktop installation verified; user daemon verification is separate.' -ExitCode 0)
+}
+
+function Invoke-WhinsetDockerUserOperation {
+    param([Parameter(Mandatory)]$Plan)
     Update-WhinsetSessionPath
     $docker = Get-Command docker.exe -ErrorAction SilentlyContinue
     if (-not $docker) {
@@ -376,9 +390,14 @@ function Invoke-WhinsetJavaHomeOperation {
 
 function Invoke-WhinsetOperationInternal {
     param([Parameter(Mandatory)]$Plan, [Parameter(Mandatory)]$State, [Parameter(Mandatory)]$Operation, [Parameter(Mandatory)]$Paths)
+    if ($Operation.Privilege -eq 'user' -or ($Operation.Kind -eq 'package' -and $Operation.Scope -ne 'machine')) {
+        Assert-WhinsetSameUser -OriginalUserSid $State.OriginalUserSid -CurrentUserSid ([string](Get-WhinsetMachineIdentity).UserSid)
+    }
     switch ([string]$Operation.Kind) {
         'package' { return (Invoke-WhinsetPackageOperation -Plan $Plan -State $State -Operation $Operation -Paths $Paths) }
         'wsl-features' { return (Invoke-WhinsetWslFeaturesOperation) }
+        'wsl-distribution' { return (Invoke-WhinsetWslDistributionOperation) }
+        'docker-user' { return (Invoke-WhinsetDockerUserOperation -Plan $Plan) }
         'wsl-runtime' { return (Invoke-WhinsetWslRuntimeOperation) }
         'docker' { return (Invoke-WhinsetDockerOperation -Plan $Plan -State $State -Operation $Operation -Paths $Paths) }
         'config-git-lfs' { return (Invoke-WhinsetGitLfsOperation) }

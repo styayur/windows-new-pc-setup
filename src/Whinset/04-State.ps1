@@ -128,6 +128,7 @@ function Get-WhinsetStatusFromState {
     if ($statuses -contains 'Blocked') { return 'CompletedWithFailures' }
     if ($State.Status -eq 'ElevationDenied') { return 'ElevationDenied' }
     if ($State.Status -eq 'Canceled') { return 'Canceled' }
+    if ($statuses -contains 'Pending' -or $statuses -contains 'Running') { return 'Incomplete' }
     return 'Complete'
 }
 

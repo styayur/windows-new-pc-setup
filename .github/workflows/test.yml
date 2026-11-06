@@ -25,6 +25,9 @@ jobs:
       - name: Whinset suite on Windows PowerShell 5.1
         shell: powershell
         run: ./tests/Run-WhinsetTests.ps1
+      - name: Security and recovery on Windows PowerShell 5.1
+        shell: powershell
+        run: ./tests/Run-HardeningTests.ps1 -EvidencePath "$env:RUNNER_TEMP/hardening-ps51.json"
 
   powershell-core:
     runs-on: windows-latest
@@ -37,6 +40,9 @@ jobs:
       - name: Whinset suite on PowerShell 7
         shell: pwsh
         run: ./tests/Run-WhinsetTests.ps1
+      - name: Security and recovery on PowerShell 7
+        shell: pwsh
+        run: ./tests/Run-HardeningTests.ps1 -EvidencePath "$env:RUNNER_TEMP/hardening-ps7.json"
 
   metadata-and-completion:
     runs-on: windows-latest
