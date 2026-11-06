@@ -27,6 +27,18 @@ try {
         $source = Join-Path $root $directory
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $stage $directory) -Recurse -Force }
     }
+    $textExtensions = @('.ps1','.psm1','.psd1','.json','.md','.yml','.yaml','.html','.svg','.toml','.txt','.cmd')
+    foreach ($file in @(Get-ChildItem -LiteralPath $stage -File -Recurse)) {
+        $extension = $file.Extension.ToLowerInvariant()
+        $isNamedText = $file.Name -in @('LICENSE','.gitignore')
+        if ($extension -notin $textExtensions -and -not $isNamedText) { continue }
+        $text = [IO.File]::ReadAllText($file.FullName)
+        $text = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+        if ($extension -eq '.cmd') { $text = $text.Replace("`n", "`r`n") }
+        $encoding = New-Object Text.UTF8Encoding($false)
+        [IO.File]::WriteAllText($file.FullName, $text, $encoding)
+    }
+
     $archiveName = "Whinset-$Version.zip"
     $archivePath = Join-Path $OutputDirectory $archiveName
     Add-Type -AssemblyName System.IO.Compression
@@ -40,7 +52,7 @@ try {
             $files = @(Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName)
             foreach ($file in $files) {
                 $relative = $file.FullName.Substring($stage.Length).TrimStart('\').Replace('\','/')
-                $entry = $archive.CreateEntry($relative, [System.IO.Compression.CompressionLevel]::Optimal)
+                $entry = $archive.CreateEntry($relative, [System.IO.Compression.CompressionLevel]::NoCompression)
                 $entry.LastWriteTime = $fixedTime
                 $input = [IO.File]::OpenRead($file.FullName)
                 try { $output = $entry.Open(); try { $input.CopyTo($output) } finally { $output.Dispose() } } finally { $input.Dispose() }
