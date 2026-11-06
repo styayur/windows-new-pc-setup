@@ -8,7 +8,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Import-Module (Join-Path $root 'src/Whinset.psd1') -Force
 & (Get-Module Whinset) {
     param($Root,$EvidencePath)
-    $environment = Get-WhinsetEnvironment
+    $environment = Get-WhinsetEnvironmentSnapshot
     $plan = New-WhinsetPlan -CatalogPath (Join-Path $Root 'config/packages.json') -Profile Minimal -Package Notepad3 -Offline -Environment $environment
     $paths = Get-WhinsetRunPaths -StateRoot (Join-Path $env:RUNNER_TEMP 'real-package-state') -PlanHash $plan.PlanHash
     Initialize-WhinsetPrivateRunDirectory $paths.RunDirectory
