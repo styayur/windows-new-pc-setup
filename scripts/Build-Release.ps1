@@ -41,11 +41,11 @@ try {
 
     $archiveName = "Whinset-$Version.zip"
     $archivePath = Join-Path $OutputDirectory $archiveName
-    $python = Get-Command python.exe,python -ErrorAction SilentlyContinue | Select-Object -First 1
+    $python = Get-Command python.exe -ErrorAction SilentlyContinue
+    if (-not $python) { $python = Get-Command python -ErrorAction SilentlyContinue }
     if (-not $python) { throw 'Python is required to create the deterministic release archive.' }
     & $python.Source (Join-Path $PSScriptRoot 'Pack-DeterministicZip.py') --source $stage --output $archivePath
     if ($LASTEXITCODE -ne 0) { throw "Deterministic ZIP creation failed with exit code $LASTEXITCODE." }
-
     $archiveHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $bootstrapPath = Join-Path $root 'beatwin.txt'
     if ($WriteBootstrap) {
