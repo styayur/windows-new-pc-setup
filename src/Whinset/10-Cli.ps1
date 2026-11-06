@@ -143,7 +143,7 @@ function Invoke-Whinset {
         elseif ($commandKey -in @('help','plan','resolve','apply','recover')) { $exitCode = [int]$script:WhinsetExitCodes.InvalidInput }
         else { $exitCode = [int]$script:WhinsetExitCodes.OperationFailed }
         if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value ([ordered]@{ Ok=$false; Command=$commandKey; ExitCode=$exitCode; Error=$_.Exception.Message }) -Depth 12) }
-        else { Write-Output "whinset: $($_.Exception.Message)" }
+        else { [Console]::Error.WriteLine("whinset: $($_.Exception.Message)") }
     }
     $global:LASTEXITCODE = $exitCode
 }

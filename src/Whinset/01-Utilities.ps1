@@ -53,7 +53,11 @@ function Get-WhinsetHashText {
 
 function Get-WhinsetHashFile {
     param([Parameter(Mandatory)][string]$Path)
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    # Avoid autoloading a PS7-only Get-FileHash function in a nested PS5.1 host.
+    $stream = [IO.File]::OpenRead($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose(); $stream.Dispose() }
 }
 
 function Write-WhinsetTextFile {

@@ -12,5 +12,7 @@
 *.toml text eol=lf
 *.txt text eol=lf
 *.cmd text eol=crlf
+*.sh text eol=lf
+*.nu text eol=lf
 *.pdf binary
 *.png binary

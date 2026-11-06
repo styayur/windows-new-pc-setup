@@ -172,7 +172,7 @@ function Install-WhinsetCli {
         $staging = Join-Path $localRoot ('staging-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $staging -Force | Out-Null
         try {
-            $files = @('whinset.ps1','whinset.cmd','README.md','LICENSE','SECURITY.md')
+            $files = @('whinset.ps1','whinset.cmd','whinset.sh','whinset.nu','README.md','LICENSE','SECURITY.md')
             foreach ($file in $files) {
                 $source = Join-Path $sourceRoot $file
                 if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $staging $file) -Force }

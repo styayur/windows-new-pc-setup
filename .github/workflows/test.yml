@@ -28,6 +28,13 @@ jobs:
       - name: Security and recovery on Windows PowerShell 5.1
         shell: powershell
         run: ./tests/Run-HardeningTests.ps1 -EvidencePath "$env:RUNNER_TEMP/hardening-ps51.json"
+      - name: Upload deterministic evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hardening-ps51
+          path: ${{ runner.temp }}/hardening-ps51.json
+          if-no-files-found: error
 
   powershell-core:
     runs-on: windows-latest
@@ -43,6 +50,53 @@ jobs:
       - name: Security and recovery on PowerShell 7
         shell: pwsh
         run: ./tests/Run-HardeningTests.ps1 -EvidencePath "$env:RUNNER_TEMP/hardening-ps7.json"
+      - name: Upload deterministic evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hardening-ps7
+          path: ${{ runner.temp }}/hardening-ps7.json
+          if-no-files-found: error
+
+  shell-compatibility:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test actual CLI across Windows shells
+        shell: pwsh
+        run: ./tests/Run-ShellTests.ps1 -RequireGitBash -EvidencePath "$env:RUNNER_TEMP/shells.json"
+      - name: Upload shell evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shell-compatibility
+          path: ${{ runner.temp }}/shells.json
+          if-no-files-found: error
+
+  release-reproducibility:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build twice and verify SHA-256 manifest
+        shell: pwsh
+        run: |
+          $a = ./scripts/Build-Release.ps1 -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-a"
+          $b = ./scripts/Build-Release.ps1 -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-b"
+          if ($a.ArchiveSha256 -cne $b.ArchiveSha256) { throw 'Release bytes differ between builds.' }
+          foreach ($line in Get-Content $a.SumsPath) {
+            if ($line -notmatch '^([a-f0-9]{64})  (.+)$') { throw 'Malformed checksum entry.' }
+            $expected = $Matches[1]; $name = $Matches[2]
+            $path = if ($name -eq 'beatwin.txt') { $a.BootstrapPath } else { Join-Path (Split-Path $a.ArchivePath) $name }
+            if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $expected) { throw "SHA-256 mismatch: $name" }
+          }
+          Copy-Item $a.SumsPath "$env:RUNNER_TEMP/reproducibility-SHA256SUMS.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-reproducibility
+          path: ${{ runner.temp }}/reproducibility-SHA256SUMS.txt
+          if-no-files-found: error
 
   metadata-and-completion:
     runs-on: windows-latest
@@ -53,12 +107,20 @@ jobs:
         shell: pwsh
         run: |
           $errors = @()
-          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+          Get-ChildItem -Recurse -File | Where-Object Extension -in @('.ps1','.psm1','.psd1') | ForEach-Object {
             $tokens=$null; $parseErrors=$null
             [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$parseErrors)
             if ($parseErrors.Count -gt 0) { $errors += $parseErrors }
           }
           if ($errors.Count -gt 0) { $errors | Out-String | Write-Error; exit 1 }
+      - name: Static analysis and catalog schema validation
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
+          $findings = @(Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error)
+          if ($findings.Count) { $findings | Format-Table | Out-String | Write-Error; exit 1 }
+          Import-Module ./src/Whinset.psd1 -Force
+          & (Get-Module Whinset) { $catalog = Read-WhinsetCatalog -Path ./config/packages.json; Test-WhinsetCatalogCycles -Catalog $catalog }
       - name: Validate module and JSON output
         shell: pwsh
         run: |
