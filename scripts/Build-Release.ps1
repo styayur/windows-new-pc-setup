@@ -50,7 +50,13 @@ try {
     $archiveHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $bootstrapPath = Join-Path $root 'beatwin.txt'
     if ($WriteBootstrap) {
-        $null = New-WhinsetBootstrapFile -TemplatePath (Join-Path $root 'bootstrap/beatwin.template.txt') -Version $Version -Sha256 $archiveHash -OutputPath $bootstrapPath
+        $bootstrapArgs = @{
+            TemplatePath = Join-Path $root 'bootstrap/beatwin.template.txt'
+            Version = $Version
+            Sha256 = $archiveHash
+            OutputPath = $bootstrapPath
+        }
+        $null = New-WhinsetBootstrapFile @bootstrapArgs
     }
     $integrity = Test-WhinsetBootstrapIntegrity -Path $bootstrapPath -ArchivePath $archivePath
     if ($VerifyBootstrap -and -not $integrity.Ok) { throw "Bootstrap verification failed: $($integrity.Error)" }

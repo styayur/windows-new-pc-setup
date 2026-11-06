@@ -336,7 +336,13 @@ try {
         Assert ($result.Error -like '*mismatch*')
         $generated = Join-Path $testRoot 'generated-beatwin.txt'
         $fakeHash = (Get-FileHash -LiteralPath $fake -Algorithm SHA256).Hash.ToLowerInvariant()
-        $null = New-WhinsetBootstrapFile -TemplatePath (Join-Path $root 'bootstrap/beatwin.template.txt') -Version 'v2.0.0-rc.1' -Sha256 $fakeHash -OutputPath $generated
+        $bootstrapArgs = @{
+            TemplatePath = Join-Path $root 'bootstrap/beatwin.template.txt'
+            Version = 'v2.0.0-rc.1'
+            Sha256 = $fakeHash
+            OutputPath = $generated
+        }
+        $null = New-WhinsetBootstrapFile @bootstrapArgs
         $matching = Test-WhinsetBootstrapIntegrity -Path $generated -ArchivePath $fake
         Assert ($matching.Ok)
     }
