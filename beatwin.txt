@@ -1,0 +1,100 @@
+# ============================================================================
+# Whinset v2.0.0-rc.1 - copy-and-paste bootstrap
+# ============================================================================
+# BEFORE DOWNLOAD - what this can change:
+# - Installs the packages selected by the profile using exact WinGet Source:Id
+#   identities. Installers can modify PATH, services, registry keys and files.
+# - Optionally enables Windows optional features, WSL/Ubuntu and Docker Desktop.
+# - Optionally changes user environment values and one machine JAVA_HOME/PATH.
+# - Administrator authorization uses normal Windows UAC. There is no bypass.
+# - Every elevated operation is grouped into one elevated worker when the plan
+#   requires administrator access. Declining UAC stops the elevated phase.
+# - Logs and state are preserved under %LOCALAPPDATA%\Whinset\v2. The temporary
+#   download/extract folder is removed after the command finishes.
+# - No automatic rollback is claimed. Review the published plan, package licenses
+#   and recovery limits before changing $WhinsetMode from 'plan' to 'apply'.
+# - Repository: https://github.com/styayur/whinset
+# ============================================================================
+
+$WhinsetVersion = 'v2.0.0-rc.1'
+$WhinsetArchiveSha256 = 'd36d3e14c6b173e0f638267569710b4da69f2df65a9134537912a23ab721fe79'
+$WhinsetAssetUrl = 'https://github.com/styayur/whinset/releases/download/v2.0.0-rc.1/Whinset-v2.0.0-rc.1.zip'
+
+# Default is safe: download, verify and show a plan. After reviewing it, change
+# this value to 'apply' and paste the block again to execute the same request.
+$WhinsetMode = 'plan'
+$WhinsetProfile = 'Developer'
+$WhinsetPackages = @()
+$WhinsetIncludePersonal = $false
+$WhinsetConfigureEnvironment = $false
+$WhinsetEnableWsl = $false
+$WhinsetEnableDocker = $false
+
+$ErrorActionPreference = 'Stop'
+if ([Environment]::OSVersion.Platform -ne 'Win32NT') { throw 'Whinset requires Windows.' }
+if ($PSVersionTable.PSVersion -lt [version]'5.1') { throw 'Whinset requires PowerShell 5.1 or later.' }
+if ($WhinsetMode -notin @('plan','apply')) { throw "WhinsetMode must be 'plan' or 'apply'." }
+
+Write-Host ''
+Write-Host "Whinset $WhinsetVersion" -ForegroundColor Cyan
+Write-Host 'Administrator operations are disclosed above. UAC is used normally; no security bypass is attempted.'
+Write-Host "Pinned asset: $WhinsetAssetUrl"
+Write-Host "Expected SHA-256: $WhinsetArchiveSha256"
+Write-Host ''
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('Whinset-' + $WhinsetVersion + '-' + [guid]::NewGuid().ToString('N'))
+$archivePath = Join-Path $tempRoot 'Whinset.zip'
+$extractPath = Join-Path $tempRoot 'package'
+$previousLocation = Get-Location
+try {
+    New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+    Write-Host 'Downloading the pinned release...' -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $WhinsetAssetUrl -OutFile $archivePath -UseBasicParsing
+    $actualHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actualHash -ne $WhinsetArchiveSha256.ToLowerInvariant()) {
+        throw "SHA-256 mismatch. Expected $WhinsetArchiveSha256 but downloaded $actualHash. Nothing was executed."
+    }
+    Write-Host 'SHA-256 verified.' -ForegroundColor Green
+    Expand-Archive -LiteralPath $archivePath -DestinationPath $extractPath -Force
+    Get-ChildItem -LiteralPath $extractPath -File -Recurse | Unblock-File
+    $entry = Join-Path $extractPath 'whinset.ps1'
+    if (-not (Test-Path -LiteralPath $entry)) { throw 'The verified archive does not contain whinset.ps1.' }
+
+    $packageArgs = @()
+    if ($WhinsetPackages.Count -gt 0) { $packageArgs = @($WhinsetPackages) }
+
+    if ($WhinsetMode -eq 'plan') {
+        Set-Location -LiteralPath $extractPath
+        & $entry plan -Profile $WhinsetProfile -Package $packageArgs -IncludePersonal:$WhinsetIncludePersonal -ConfigureEnvironment:$WhinsetConfigureEnvironment -EnableWsl:$WhinsetEnableWsl -EnableDocker:$WhinsetEnableDocker -Json:$false
+        $resultCode = $LASTEXITCODE
+        Write-Host ''
+        Write-Host "Plan exit code: $resultCode" -ForegroundColor $(if ($resultCode -eq 0) { 'Green' } else { 'Red' })
+        Write-Host "State and logs will be stored under: $env:LOCALAPPDATA\Whinset\v2"
+    } else {
+        Set-Location -LiteralPath $extractPath
+        Write-Host 'Building the reviewed execution plan...' -ForegroundColor Cyan
+        $planJson = & $entry plan -Profile $WhinsetProfile -Package $packageArgs -IncludePersonal:$WhinsetIncludePersonal -ConfigureEnvironment:$WhinsetConfigureEnvironment -EnableWsl:$WhinsetEnableWsl -EnableDocker:$WhinsetEnableDocker -Json
+        if ($LASTEXITCODE -ne 0) { throw 'Plan generation failed. Apply was not started.' }
+        $plan = $planJson | ConvertFrom-Json
+        if (@($plan.Blockers).Count -gt 0) { throw ('Plan blockers: ' + (@($plan.Blockers) -join ' ')) }
+        Write-Host ("Plan {0}: {1} operations; UAC prompts expected: {2}" -f $plan.PlanHash.Substring(0,12), $plan.Operations.Count, $plan.Summary.UacPromptsExpected)
+        Write-Host 'Executing the accepted plan. Windows may request administrator authorization once.' -ForegroundColor Yellow
+        & $entry apply -Profile $WhinsetProfile -Package $packageArgs -IncludePersonal:$WhinsetIncludePersonal -ConfigureEnvironment:$WhinsetConfigureEnvironment -EnableWsl:$WhinsetEnableWsl -EnableDocker:$WhinsetEnableDocker -AcceptAgreements
+        $resultCode = $LASTEXITCODE
+        Write-Host ''
+        Write-Host "Whinset exit code: $resultCode" -ForegroundColor $(if ($resultCode -eq 0) { 'Green' } elseif ($resultCode -eq 3010) { 'Yellow' } else { 'Red' })
+        if ($resultCode -eq 3010) { Write-Host 'Restart Windows, then run the same apply block again or: whinset recover -Retry' -ForegroundColor Yellow }
+        Write-Host "State and logs: $env:LOCALAPPDATA\Whinset\v2"
+    }
+} finally {
+    Set-Location $previousLocation
+    if (Test-Path -LiteralPath $tempRoot) {
+        $resolvedTemp = [IO.Path]::GetFullPath($tempRoot)
+        $systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+        $leaf = Split-Path $resolvedTemp -Leaf
+        if ($resolvedTemp.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase) -and $leaf -like 'Whinset-v*-*') {
+            Remove-Item -LiteralPath $resolvedTemp -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}

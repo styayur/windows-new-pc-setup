@@ -1,39 +1,51 @@
 # Contributing
 
-This repository provisions Windows machines, so correctness and reversibility matter more than clever automation.
+## Scope
 
-## Canonical entrypoint
+Whinset preserves the legacy SetupNewPC entrypoints while the `whinset` module is the canonical v2 interface. Changes must not silently remove a previously supported package or bypass the documented privilege/recovery boundaries.
 
-`SetupNewPC_Optimized.ps1` is the supported entrypoint. `Setupnewpc.ps1` is a compatibility wrapper. `Install-Applications.WithConfirmation.ps1` is an alternate per-package confirmation mode. `legacy/` is historical and is not compatible with the v2 workflow.
+## Before changing package behavior
 
-## Development
+- Use an exact WinGet/MSStore `Source:Id`.
+- Add stable `Key`, `Vendor`, architecture, scope, version policy, stage, privilege, dependencies, conflicts, expected state and recovery metadata.
+- Explain vendor/source/scope distinctions when adding similar packages.
+- Never select a package by display-name similarity at execution time.
+- Update ambiguity, dependency and conflict tests.
 
-Requirements: Windows 11, Windows PowerShell 5.1 or PowerShell 7, and WinGet for real execution. Tests are dependency-free and must not touch the host.
+## Validation
+
+Run all four suites:
 
 ```powershell
-.\SetupNewPC_Optimized.ps1 -Profile Developer -WhatIf | ConvertTo-Json -Depth 8
-.\tests\Run-Tests.ps1
+pwsh -NoProfile -File .\tests\Run-Tests.ps1
+pwsh -NoProfile -File .\tests\Run-WhinsetTests.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-Tests.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-WhinsetTests.ps1
 ```
 
-The regression suite must cover parser validation, `-WhatIf`, configuration schema, non-admin behavior, mocked install flows, retries, and concurrency. Do not add tests that install software or alter Windows features.
+Build and verify the release candidate:
+
+```powershell
+pwsh -NoProfile -File .\scripts\Build-Release.ps1 -Version v2.0.0-rc.1 -OutputDirectory $env:TEMP\whinset-release -VerifyBootstrap
+```
+
+Mocked tests do not certify real UAC, installers, Windows features or reboot continuation. Record real Windows 11 VM acceptance separately in `tests/VM-CHECKLIST.md`.
+
+## Privilege and security review
+
+Any change to planning, elevation, package execution, catalog trust, logging or recovery requires tests for:
+
+- one-UAC consolidation
+- UAC denial with no elevated operation started
+- already-elevated execution
+- interrupted operation recovery
+- reboot gate and new-boot resume
+- exact plan reconstruction/hash validation
+- structured logging
+- no arbitrary elevated command/script injection
+
+Do not add hidden UAC bypasses, credential collection, encoded payloads, unpinned remote code or claims of automatic rollback that are not implemented and verified.
 
 ## Pull requests
 
-- Keep one entrypoint canonical; wrappers must remain thin and compatible.
-- Add regression tests for behavior changes.
-- Document new privileged, destructive, networked, or restart-related behavior.
-- Preserve exit-code and state-file compatibility unless a migration is documented.
-- New package-catalog entries require an official WinGet/MSStore ID and a practical reason.
-- Do not silently download scripts or installers outside WinGet/MSStore.
-
-Maintainers perform releases. Security issues must follow [SECURITY.md](SECURITY.md), not the public issue tracker.
-
-
-## Verification commands
-
-```powershell
-powershell.exe -NoProfile -File ./tests/Run-Tests.ps1
-pwsh -NoProfile -File ./tests/Run-Tests.ps1
-```
-
-Both existing CI jobs and CodeForge regression remain in place. Do not bypass execution policy for the tests. Record real installation/reboot evidence separately using [the VM checklist](tests/VM-CHECKLIST.md); mocked tests do not certify a release for every machine.
+Describe compatibility effects on exit codes, state layout, schema, package IDs and legacy entrypoints. Link real acceptance evidence separately from mocked test results.

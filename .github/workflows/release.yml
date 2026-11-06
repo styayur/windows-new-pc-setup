@@ -1,12 +1,14 @@
-name: Release provisioning bundle
+name: Release Whinset
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
       version:
-        description: Existing tag to package, for example v2.0.0
+        description: Existing tag to package, for example v2.0.0-rc.1
         required: true
         type: string
 
@@ -16,37 +18,72 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.version || github.ref }}
           fetch-depth: 0
-      - name: Validate release tag and regression suite
+
+      - name: Resolve and validate release version
+        id: meta
         shell: pwsh
         run: |
           $version = '${{ inputs.version }}'
           if (-not $version) { $version = '${{ github.ref_name }}' }
-          if ($version -notmatch '^v\d+\.\d+\.\d+$') { throw "Tag must use vX.Y.Z: $version" }
+          if ($version -notmatch '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') { throw "Tag must use vX.Y.Z or vX.Y.Z-prerelease: $version" }
           git describe --exact-match --tags HEAD
+          "version=$version" >> $env:GITHUB_OUTPUT
+          if ($version -match '-') { "prerelease=true" >> $env:GITHUB_OUTPUT } else { "prerelease=false" >> $env:GITHUB_OUTPUT }
+          if (-not (Test-Path "docs/releases/$version.md")) { throw "Release notes missing: docs/releases/$version.md" }
+
+      - name: Run Windows PowerShell 5.1 tests
+        shell: powershell
+        run: |
           ./tests/Run-Tests.ps1
-      - name: Assemble deterministic repository bundle
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/Run-WhinsetTests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run PowerShell 7 tests
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $version = '${{ inputs.version }}'
-          if (-not $version) { $version = '${{ github.ref_name }}' }
-          $stage = Join-Path $env:RUNNER_TEMP 'windows-new-pc-setup'
-          New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item SetupNewPC_Optimized.ps1,Setupnewpc.ps1,Install-Applications.WithConfirmation.ps1,README.md,LICENSE,CONTRIBUTING.md,SECURITY.md,config,src,examples,docs,tests,legacy -Destination $stage -Recurse
-          $archive = "windows-new-pc-setup-$version.zip"
-          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
-          Get-FileHash -Algorithm SHA256 $archive | ForEach-Object { "$($_.Hash.ToLower())  $archive" } | Set-Content -Encoding utf8NoBOM SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v3
+          ./tests/Run-Tests.ps1
+          ./tests/Run-WhinsetTests.ps1
+
+      - name: Build deterministic release and verify beatwin checksum
+        id: build
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'whinset-release'
+          $version = '${{ steps.meta.outputs.version }}'
+          $result = ./scripts/Build-Release.ps1 -Version $version -OutputDirectory $out -VerifyBootstrap
+          "archive_path=$($result.ArchivePath)" >> $env:GITHUB_OUTPUT
+          "archive_name=$(Split-Path $result.ArchivePath -Leaf)" >> $env:GITHUB_OUTPUT
+          "bootstrap_path=$($result.BootstrapPath)" >> $env:GITHUB_OUTPUT
+          "sums_path=$($result.SumsPath)" >> $env:GITHUB_OUTPUT
+          "archive_sha256=$($result.ArchiveSha256)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload release payload artifact
+        uses: actions/upload-artifact@v7
         with:
-          tag_name: ${{ inputs.version || github.ref_name }}
-          generate_release_notes: true
+          name: whinset-release-${{ steps.meta.outputs.version }}
+          path: |
+            ${{ steps.build.outputs.archive_path }}
+            ${{ steps.build.outputs.bootstrap_path }}
+            ${{ steps.build.outputs.sums_path }}
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.meta.outputs.version }}
+          name: Whinset ${{ steps.meta.outputs.version }}
+          body_path: docs/releases/${{ steps.meta.outputs.version }}.md
+          draft: false
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
           fail_on_unmatched_files: true
           files: |
-            windows-new-pc-setup-*.zip
-            SHA256SUMS.txt
+            ${{ steps.build.outputs.archive_path }}
+            ${{ steps.build.outputs.bootstrap_path }}
+            ${{ steps.build.outputs.sums_path }}

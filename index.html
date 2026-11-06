@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Windows 新机配置 · v2</title><meta name="description" content="可配置、可预览、可重复执行的 Windows 11 装机脚本。">
+<title>Whinset · 确定性 Windows 11 装机</title><meta name="description" content="可审查、可恢复的 Windows 11 装机计划，精确 WinGet ID、依赖 DAG 与单次 UAC。">
 <style>
     :root {
       --paper: #f3f7fa;
@@ -566,28 +566,27 @@
       .doc-section { break-inside: avoid; padding-bottom: 2rem; }
       a { color: #000; }
     }
-  </style></head><body><main style="max-width:960px;margin:64px auto;padding:24px">
-<p>WINDOWS NEW PC SETUP · v2</p><h1>一份清单，复用到下一台电脑。</h1>
-<p>先预览，再执行。软件按需安装，失败可重试，重启后重新核验。支持 Windows PowerShell 5.1 与 PowerShell 7。</p>
-<p><a href="https://github.com/styayur/windows-new-pc-setup">查看仓库与完整说明</a> · <a href="https://github.com/styayur/windows-new-pc-setup/archive/refs/heads/main.zip">下载完整仓库 ZIP</a></p>
-<p><strong>版本说明：</strong>当前源码为 v2 流程；公开最新版仍是 v1.1.0，v2.0.0 尚为草稿。旧版默认行为不同，请勿混用。<a href="https://github.com/styayur/windows-new-pc-setup/blob/main/docs/operations.md">下载校验、恢复与移除说明</a>。</p>
-<h2>1. 查看安装计划</h2><p>解压整个仓库，保留 src 和 config 目录。在 PowerShell 中运行：</p>
-<pre><code>.\SetupNewPC_Optimized.ps1 -Profile Developer -WhatIf | ConvertTo-Json -Depth 8</code></pre>
-<h2>2. 执行已审阅的清单</h2><p>需要 Windows 11、64 位管理员 PowerShell 和 WinGet 1.8+。使用当前 Windows 用户的管理员终端：</p>
-<pre><code>.\SetupNewPC_Optimized.ps1 -Profile Developer -AcceptAgreements</code></pre>
-<p>默认不执行 WinUtil、不启用 WSL/Docker、不额外配置开发环境变量、不自动重启。</p>
-<h2>3. 按需启用功能</h2>
-<pre><code># WSL2 + Ubuntu + Docker Desktop
-.\SetupNewPC_Optimized.ps1 -EnableDocker -AcceptAgreements
-
-# 每个缺少的软件逐项确认
-.\Install-Applications.WithConfirmation.ps1 -Profile Full -AcceptAgreements
-
-# 使用自己的清单
-.\SetupNewPC_Optimized.ps1 -ConfigPath .\config\my-packages.json -WhatIf</code></pre>
-<p>没有自动回滚或卸载；成功安装与系统修改会保留。真实装机前准备可恢复备份，删除脚本或状态目录不会撤销系统变更。</p>
-<h2>重启与恢复</h2><p>返回码 3010 表示需要重启。保存工作、手动重启，再执行同一条命令。不会创建登录续跑任务；每次都会检查真实安装情况。</p>
-<p>状态和日志位于 %LOCALAPPDATA%\SetupNewPC\v2\&lt;配置哈希&gt;。失败退出 1，参数或前置检查失败退出 2，用户跳过退出 3。</p>
-<h2>维护说明</h2><p>当前文档以 <a href="https://github.com/styayur/windows-new-pc-setup/blob/main/README.md">README</a> 为准。旧 DSC 和 PDF 已移入 legacy，仅供历史参考；旧脚本 TXT 镜像已停用。不能只下载单个 PS1。</p>
+<p>WHINSET · v2.0.0-rc.1</p><h1>先看清计划，再让 Windows 安静地完成。</h1>
+<p>精确软件 ID、依赖 DAG、用户/管理员操作分离、单次 UAC、结构化日志与可恢复状态。支持 PowerShell 7，并保留 Windows PowerShell 5.1 兼容。</p>
+<p><a href="https://github.com/styayur/whinset">查看仓库与完整说明</a> · <a href="https://github.com/styayur/whinset/releases">Release / beatwin.txt</a> · <a href="https://github.com/styayur/whinset/blob/main/docs/security-model.md">安全与权限模型</a></p>
+<p><strong>发布状态：</strong>当前为 v2.0.0-rc.1。真实 Windows 11 虚拟机的 UAC、管理员安装和重启续跑验收尚未完成，因此 final v2.0.0 暂不发布。</p>
+<h2>下载前需要了解</h2><p>管理员操作可能安装机器级软件、启用 Windows 功能、安装 WSL/Ubuntu/Docker Desktop，并修改机器 JAVA_HOME/PATH。用户操作可能修改 Git LFS、uv、Conda、Go、Rust 与用户环境变量。UAC 使用 Windows 正常授权，不绕过、不关闭。</p>
+<p>apply 仅在仍有管理员操作时请求一次 UAC；拒绝时退出 4。可能需要重启，返回 3010 后手动重启并执行 recover -Retry。没有自动回滚承诺；日志与状态位于 %LOCALAPPDATA%\Whinset\v2。</p>
+<h2>1. 预览计划</h2>
+<pre><code>pwsh -NoProfile -File .\whinset.ps1 plan -Profile Developer
+pwsh -NoProfile -File .\whinset.ps1 plan -Profile Minimal -Exclude Chrome -Json</code></pre>
+<h2>2. 安装命令并执行已审阅计划</h2>
+<pre><code>pwsh -NoProfile -File .\whinset.ps1 install-cli
+whinset doctor
+whinset apply -Profile Minimal -AcceptAgreements</code></pre>
+<p>软件标识只接受稳定 Key 或精确 Source:Id。显示名称不是安装选择器；相似候选会显示 vendor、ID、来源、架构、作用域和权限，不会静默猜测。</p>
+<h2>3. 恢复与诊断</h2>
+<pre><code>whinset status
+whinset recover
+whinset recover -Retry
+whinset doctor -Json</code></pre>
+<p>退出码：0 完成，1 操作失败，2 输入/计划错误，3 兼容流程取消，4 拒绝 UAC，5 doctor 不健康，3010 需要重启。旧 SetupNewPC 状态只读发现，不删除、不改写。</p>
+<h2>维护说明</h2><p>当前文档以 <a href="https://github.com/styayur/whinset/blob/main/README.md">README</a> 为准。beatwin.txt 固定 Release URL 与 SHA-256，默认只预览；审阅后才切换为 apply。旧 DSC/PDF 仅作历史参考。</p>
+<p>项目采用 MIT 许可证；第三方应用适用各自许可证。</p>
 <p>项目采用 MIT 许可证；第三方应用适用各自许可证。</p>
 </main></body></html>

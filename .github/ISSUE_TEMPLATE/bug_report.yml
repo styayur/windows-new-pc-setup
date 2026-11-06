@@ -6,7 +6,7 @@ body:
     id: version
     attributes:
       label: Version
-      placeholder: v2.0.0
+      placeholder: v2.0.0-rc.1
     validations:
       required: true
   - type: input
@@ -29,9 +29,9 @@ body:
     attributes:
       label: Reproduction steps
       placeholder: |
-        1. Run preview with ...
+        1. Run whinset plan ...
         2. Confirm expectations ...
-        3. Execute with ...
+        3. Run whinset apply -AcceptAgreements ...
     validations:
       required: true
   - type: textarea

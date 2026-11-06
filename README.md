@@ -1,95 +1,217 @@
-# Windows New PC Setup
+# Whinset
 
-Preview, review and repeat a Windows 11 setup from a WinGet package manifest, with explicit control over system changes.
+**Deterministic Windows 11 setup with explicit package identities, a reviewable DAG plan, and one necessary UAC boundary.**
 
-**PowerShell-native · CLI-first · Read-only-first · Explicit recovery limits · Minimal dependencies**
+[![PowerShell regression tests](https://github.com/styayur/whinset/actions/workflows/test.yml/badge.svg)](https://github.com/styayur/whinset/actions/workflows/test.yml)
+[Security model](docs/security-model.md) · [CLI reference](docs/cli.md) · [Package resolution](docs/package-resolution.md) · [Recovery](docs/recovery.md) · [中文说明](docs/README.zh-CN.md)
 
-[![CI](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml/badge.svg)](https://github.com/styayur/windows-new-pc-setup/actions/workflows/test.yml)
-[中文说明](docs/README.zh-CN.md) · [Project page](https://styayur.github.io/windows-new-pc-setup/) · [Release history](https://github.com/styayur/windows-new-pc-setup/releases)
+Current source: **v2.0.0-rc.1**. This is a release candidate because real Windows 11 VM acceptance of UAC, privileged installers, Windows features and reboot continuation is not yet certified.
 
-For Windows users who want a reviewable software list they can reuse on another PC. Select a profile, exclude packages or supply your own JSON manifest. Repeated execution checks installed packages and retries missing ones.
+## Before download: privilege and system-change disclosure
 
-**Version boundary:** these instructions describe the v2 source workflow. The latest public release is still **v1.1.0**; v2.0.0 remains a draft. Old release assets have different defaults. Use a reviewed current checkout for these commands; see [download and verification](docs/operations.md#download-and-version-boundary).
+Read this before running `beatwin.txt` or changing `WhinsetMode` from `plan` to `apply`.
 
-## Quick start
+- **Administrator operations may include:** installing machine-scoped WinGet/MSStore packages, enabling `VirtualMachinePlatform` and Windows Subsystem for Linux, updating/installing WSL 2 and Ubuntu, installing Docker Desktop, and setting machine `JAVA_HOME`/`PATH`.
+- **User operations may include:** Git LFS hooks, `UV_PYTHON_PREFERENCE`, Conda PowerShell initialization and `auto_activate_base=false`, Go user configuration, Rust's `~/.cargo/bin`, and user `PATH` changes.
+- Installers can change files, services, startup entries, PATH, registry values and other machine state beyond Whinset's own operation records.
+- UAC is used through normal Windows elevation. Whinset does not disable UAC, collect credentials, use hidden elevation tricks, or pass arbitrary PowerShell code to the elevated process.
+- A non-elevated `apply` requests **one UAC authorization** when elevated work remains. All elevated operations then run in one validated worker.
+- If UAC is declined, the elevated phase stops with exit code **4**. The non-elevated planning/state files remain intact; no privileged installer was started by that phase.
+- Logs and structured state are stored under `%LOCALAPPDATA%\Whinset\v2`.
+- Packages can normally be removed with an exact WinGet uninstall, but some installer changes remain manual. Windows features, WSL distributions, Docker first-run state, registry edits and vendor services must be reviewed individually. **Whinset does not claim automatic rollback.**
+- There is no promise that uninstalling a package restores every PATH, service, registry or application setting that its installer changed.
+- Restart may be required. Whinset never restarts Windows automatically.
 
-Use Windows PowerShell **5.1** or PowerShell **7**. Clone the complete repository, review the scripts, and start in a normal, non-elevated terminal:
+The same disclosure is included in the `v2.0.0-rc.1` release notes and in `beatwin.txt` before the download step.
+
+## Quick start with `beatwin.txt`
+
+`beatwin.txt` is the human-readable copy-and-paste bootstrap. It defaults to safe plan mode:
+
+1. Download the pinned `v2.0.0-rc.1` release archive.
+2. Verify its fixed SHA-256 value before extraction.
+3. Extract under the current user's temporary directory.
+4. Run `plan` without Whinset state creation.
+5. Delete the temporary download/extraction directory.
+
+After reviewing the plan and licenses, change `$WhinsetMode = 'plan'` to `$WhinsetMode = 'apply'` in the pasted block. `apply` still rebuilds and validates the plan, then requests UAC only if elevated work remains.
+
+`beatwin.txt` never downloads `main`, never uses `Invoke-Expression`, never uses encoded commands, and is tied to a release URL and SHA-256 rather than a moving branch.
+
+## Install the `whinset` command
+
+From a reviewed checkout:
 
 ```powershell
-git clone https://github.com/styayur/windows-new-pc-setup.git
-cd windows-new-pc-setup
-./SetupNewPC_Optimized.ps1 -Profile Minimal -WhatIf | ConvertTo-Json -Depth 8
+pwsh -NoProfile -File .\whinset.ps1 plan -Profile Developer
+pwsh -NoProfile -File .\whinset.ps1 install-cli
 ```
 
-`-WhatIf` (also `-Plan`) does not query WinGet, use the network, elevate, create logs/state or register tasks. Actual preview excerpt (2026-10-16; selected fields and package count):
+`install-cli` copies the reviewed files under `%LOCALAPPDATA%\Whinset\current` and adds that directory to the **current user's PATH**. Open a new terminal afterwards:
+
+```powershell
+whinset version
+whinset plan -Profile Developer
+```
+
+The command is a PowerShell module/alias backed by `whinset.ps1` and `whinset.cmd`; no internal path is required after installation. Tab completion covers commands, profiles, groups, stages and package keys.
+
+## Command reference
+
+```powershell
+whinset plan   -Profile Developer
+whinset plan   -Profile Minimal -Exclude Chrome
+whinset apply  -Profile Minimal -AcceptAgreements
+whinset status
+whinset doctor
+whinset resolve chrome
+whinset recover -Retry
+```
+
+| Command | Purpose |
+| --- | --- |
+| `plan` | Build and validate the immutable operation graph. Does not create Whinset state or request UAC. |
+| `apply` | Recheck package state, execute user operations, then one elevated worker for elevated operations. Requires `-AcceptAgreements`. |
+| `status` | Show the latest/selected run, operation outcomes, reboot gate and read-only legacy SetupNewPC state. |
+| `doctor` | Read-only checks for Windows 11, architecture, PowerShell, WinGet, sources, catalog, plan engine and restart state. |
+| `resolve` | Show candidates with stable key, vendor, exact `Source:Id`, architecture, scope and privilege. |
+| `recover` | Show recovery limits; `-Retry` reconstructs and hash-verifies the saved plan before resuming. |
+| `install-cli` | Install/update the per-user command and PATH entry. |
+| `version` | Print Whinset, PowerShell and repository information. |
+
+Use `-Json` for one structured JSON document. Use `whinset help`, `whinset help apply`, or `whinset help security` for command help.
+
+## Profiles
+
+Profiles and groups live in [config/packages.json](config/packages.json), not in display-name matching code.
+
+| Profile | Groups |
+| --- | --- |
+| Minimal | Core |
+| Developer | Core + Developer |
+| AI | Core + Developer + AI |
+| Engineering | Core + Developer + Engineering |
+| Full | Core + Developer + AI + Engineering + Personal |
+
+`-Group`, `-IncludePersonal`, `-Package`, `-Exclude` and `-SkipStoreApps` adjust the selection deterministically. Add `-ConfigureEnvironment`, `-EnableWsl`, `-EnableDocker` or `-DockerSmokeTest` only when those changes are intended.
+
+## Package disambiguation
+
+Every package in schema 2 has a stable internal key, display name, vendor, exact WinGet/MSStore ID, source, architecture policy, scope policy, version policy, stage, privilege, dependencies, conflicts, expected state and recovery metadata.
+
+Resolution rules:
+
+- A stable **Key** is always accepted, for example `Chrome` or `Git`.
+- An exact **ID** is accepted when unique, for example `Google.Chrome`.
+- If the same ID exists in more than one source, qualify it as `winget:<id>` or `msstore:<id>`, or use the stable Key.
+- A display name is **not** an installation selector. `whinset plan -Package "Google Chrome"` fails and prints candidates rather than guessing.
+- Similar candidates show vendor, identity, architecture, scope and privilege.
+- Dependencies are auto-included; dependency cycles, unknown dependencies and declared conflicts fail before execution.
+- `-Version` plus an explicit scope remains rejected because WinGet export cannot reliably prove the version per scope.
+
+Use `whinset resolve <query>` to inspect candidates without changing the machine.
+
+## Execution architecture
 
 ```text
-Profile              : Minimal
-Stage                : Auto
-WSL                  : False
-Docker               : False
-WinUtil              : False
-ConfigureEnvironment : False
-PackageCount         : 5
+catalog -> explicit selection -> dependency DAG -> environment/preflight
+        -> immutable plan hash -> user operations
+        -> one validated elevated worker -> user post-operations -> report
 ```
 
-After reviewing the full plan and software/source licenses, open a **64-bit administrator terminal as the same Windows user**, return to the checkout, and run:
+The plan records:
+
+- OS/PowerShell/WinGet/user context and pending restart state
+- requested profile, exact package set and operation order
+- installed/missing/unknown inventory
+- dependencies, conflicts and stable tie-breakers
+- user versus elevated privilege
+- optional reboot interruption point
+- recovery classification and limitations
+- expected UAC count
+- a SHA-256 plan identity and short run ID
+
+Installed packages are rechecked immediately before elevation. If a package disappeared after planning it returns to the validated install operation; if it is still installed, no UAC is requested for it.
+
+The elevated worker does not trust plan-provided scripts or paths. It reloads the installed catalog, reconstructs the allowed operation graph, verifies the catalog and plan hashes, accepts fixed operation kinds only, and checks a per-attempt nonce. There is no `Invoke-Expression` or arbitrary command field in the serialized plan.
+
+## Status, logs and resume
+
+Default state root:
+
+```text
+%LOCALAPPDATA%\Whinset\v2
+```
+
+Each run contains:
+
+```text
+runs\<plan-hash>\
+  plan.json
+  state.json
+  operations.jsonl
+  report.json
+```
+
+`operations.jsonl` is append-only structured logging for plan/elevation/operation lifecycle and installer output. `state.json` uses atomic replacement with a `.bak` copy.
+
+Re-running the same plan:
+
+- verifies actual installed state again
+- skips operations already verified
+- retries failed/interrupted pending operations
+- blocks continuation in the same boot after a reboot request
+- resumes pending operations after a new boot
+- preserves previous operation history in `operations.jsonl`
+
+Legacy `%LOCALAPPDATA%\SetupNewPC\v2` state is discovered read-only by `whinset status`. The migration path is to run `whinset plan` and `whinset apply`: exact inventory checks reconcile what is already installed without deleting legacy state.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Complete; all selected operations succeeded or were already satisfied |
+| 1 | Operation failure, blocked dependency or incomplete operation graph |
+| 2 | Invalid input, catalog/plan validation failure or missing `-AcceptAgreements` |
+| 3 | User cancellation/decline in a compatibility flow |
+| 4 | UAC authorization denied or elevation did not start |
+| 5 | `doctor` found an unhealthy required capability |
+| 3010 | Restart required; stop and resume after Windows restarts |
+
+## Requirements and limitations
+
+- Real apply: Windows 11 client build 22000+, 64-bit, WinGet 1.8+, network access to selected sources, and a user who can authorize administrator operations.
+- PowerShell 7 is the primary target; Windows PowerShell 5.1 remains supported and tested.
+- Plan mode is read-only with respect to Whinset state, packages and Windows features. WinGet itself may refresh local source metadata during inventory.
+- No Windows restart, scheduled continuation, automatic uninstall or automatic rollback is implemented.
+- Docker Desktop first-run setup and daemon startup may require manual action.
+- WSL/Docker behavior remains vendor- and policy-dependent.
+- Custom catalogs are **plan-only** in this release candidate. Apply uses the installed built-in catalog. The legacy `SetupNewPC_Optimized.ps1` remains available for reviewed custom manifests.
+- Legacy per-package confirmation remains available only through `Install-Applications.WithConfirmation.ps1`; the canonical Whinset apply flow intentionally avoids redundant per-operation prompts.
+- Mocked CI tests do not certify every installer. Clean Windows 11 VM UAC/reboot acceptance is still pending for rc.1. See the [Windows acceptance report](docs/acceptance/windows-v2.0.0-rc.1.md).
+
+## Compatibility
+
+The following remain for existing users:
+
+- `SetupNewPC_Optimized.ps1`
+- `Setupnewpc.ps1`
+- `Install-Applications.WithConfirmation.ps1`
+- schema 1 custom catalogs
+- legacy state directories and archived DSC material under `legacy/`
+
+New development and documentation use the `whinset` identity. See [script boundaries](docs/script-boundaries.md) for the compatibility matrix.
+
+## Development and verification
 
 ```powershell
-./SetupNewPC_Optimized.ps1 -Profile Minimal -AcceptAgreements
-$LASTEXITCODE
+pwsh -NoProfile -File .\tests\Run-Tests.ps1
+pwsh -NoProfile -File .\tests\Run-WhinsetTests.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-Tests.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-WhinsetTests.ps1
+pwsh -NoProfile -File .\scripts\Build-Release.ps1 -Version v2.0.0-rc.1 -OutputDirectory $env:TEMP\whinset-release -VerifyBootstrap
 ```
 
-Actual execution requires Windows 11 client (build 22000+), WinGet 1.8+ and access to the selected package sources. Install/update [Microsoft App Installer](https://aka.ms/getwinget) yourself if needed. No package manager, global execution-policy change or optional integration is installed as a bootstrap step.
+The release workflow rebuilds the archive deterministically, verifies the pinned `beatwin.txt` checksum, uploads `Whinset-<version>.zip`, `beatwin.txt` and `SHA256SUMS.txt`, and publishes `v2.0.0-rc.1` as a prerelease.
 
-## Choose what runs
-
-| Profile | Selected groups |
-| --- | --- |
-| Minimal | Core: PowerShell 7, 7-Zip, Git, GitHub CLI, Chrome |
-| Developer (default when omitted) | Core + Developer |
-| AI / Engineering | Core + Developer + the named group |
-| Full | All groups, including Personal |
-
-```powershell
-./SetupNewPC_Optimized.ps1 -Profile Developer -Exclude Chrome,Postman -SkipStoreApps -WhatIf
-./Install-Applications.WithConfirmation.ps1 -Profile Minimal -WhatIf
-# After review: add -AcceptAgreements without -WhatIf to execute.
-# The confirmation entrypoint asks for Y for each missing package.
-```
-
-[The manifest](config/packages.json) is authoritative. A custom `-ConfigPath` replaces it entirely. `Full` does not enable WSL, Docker, WinUtil or extra environment configuration. Those require explicit switches described in [configuration](docs/configuration.md). WinUtil additionally requires a reviewed local file and matching SHA-256; the tool does not download and execute a floating remote script.
-
-## Status, retry and recovery
-
-Inspect `%LOCALAPPDATA%/SetupNewPC/v2/<configuration-hash>/`: `plan.json`, `state.json`, `setup.log` and `environment-report.json` record the run. A custom `-StateDirectory` selects the parent location. There is no separate status subcommand; preview and saved reports are the inspection entrypoints.
-
-| Exit code | Meaning |
-| --- | --- |
-| 0 | Selected stage completed; inspect warnings |
-| 1 / 2 | Execution failure / input or prerequisite failure |
-| 3 | User skipped packages; incomplete |
-| 3010 | Restart required; incomplete |
-
-For 3010, save work, restart manually and repeat the same command. The tool does not restart Windows or schedule automatic continuation. **There is no automatic uninstall or rollback:** successful package installations and system changes remain. Removing the checkout/state does not undo them. Prepare a recoverable system/configuration backup before provisioning; see [recovery, removal and v1 migration](docs/operations.md).
-
-## Requirements and limits
-
-- Real provisioning is Windows 11 only. Packages, Store region/policy, licenses and installer behavior can change; preview does not verify live availability.
-- Installers can modify PATH, services and system settings even without `-ConfigureEnvironment`. WSL/Docker may require restart and manual first-run setup.
-- Installed-record checks do not prove every application's functionality. A timed-out installer may leave detached services running; inspect before retrying.
-- Existing tests use mocks. Real installation, reboot and WSL/Docker acceptance remain separate [VM checks](tests/VM-CHECKLIST.md).
-- `Setupnewpc.ps1` remains a compatibility wrapper. Archived DSC files are historical, not a supported v2 alternative.
-
-## Documentation
-
-[Configuration and optional features (中文)](docs/configuration.md) · [Operation, verification and recovery](docs/operations.md) · [Script boundaries](docs/script-boundaries.md) · [Reusable local entrypoint](examples/Setup-MyPC.ps1) · [Historical material](legacy/README.md)
-
-<a id="快速开始"></a>
-<a id="从-v1-迁移"></a>
-
-## License, contributing and security
-
-[MIT](LICENSE) · [Contributing and tests](CONTRIBUTING.md) · [Security](SECURITY.md) · [Issues](https://github.com/styayur/windows-new-pc-setup/issues)
-
-Third-party packages, services and WinUtil retain their own licenses. Reversibility means planning and documenting recovery, not claiming that every system change can be automatically undone.
+MIT licensed. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
