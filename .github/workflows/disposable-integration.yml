@@ -1,0 +1,42 @@
+name: Disposable package integration
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'config/packages.json'
+      - 'tests/Run-DisposablePackageTest.ps1'
+      - '.github/workflows/disposable-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-component:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Provision WinGet on disposable runner only
+        shell: pwsh
+        run: |
+          # Microsoft's supported bootstrap: https://learn.microsoft.com/windows/package-manager/winget/
+          if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
+            Install-Module Microsoft.WinGet.Client -Repository PSGallery -Scope CurrentUser -Force
+            Repair-WinGetPackageManager -AllUsers
+          }
+          winget --version
+          if ($LASTEXITCODE) { throw 'WinGet provisioning failed.' }
+      - name: Fresh Notepad3 installation and repeated package recheck
+        shell: pwsh
+        run: ./tests/Run-DisposablePackageTest.ps1 -EvidencePath "$env:RUNNER_TEMP/real-package.json"
+      - name: Upload real package evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: disposable-package-evidence
+          path: |
+            ${{ runner.temp }}/real-package.json
+            ${{ runner.temp }}/real-package-state
+          if-no-files-found: error

@@ -101,11 +101,13 @@ param(
     [Alias('?')][switch]$Help
 )
 $ErrorActionPreference = 'Stop'
+# A stable pipe encoding is part of the -Json contract, including PowerShell 5.1.
+[Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
 try {
     Import-Module (Join-Path $PSScriptRoot 'src\Whinset.psd1') -Force -ErrorAction Stop
     Invoke-Whinset -Command $Command -Topic $Topic -Profile $Profile -Package $Package -Exclude $Exclude -Group $Group -IncludePersonal:$IncludePersonal -SkipStoreApps:$SkipStoreApps -Stage $Stage -ConfigureEnvironment:$ConfigureEnvironment -SkipCondaInit:$SkipCondaInit -EnableWsl:$EnableWsl -EnableDocker:$EnableDocker -DockerSmokeTest:$DockerSmokeTest -ApplicationsOnly:$ApplicationsOnly -MaxAttempts $MaxAttempts -InstallTimeoutSeconds $InstallTimeoutSeconds -AcceptAgreements:$AcceptAgreements -Json:$Json -Offline:$Offline -Detailed:$Detailed -PlanOnly:$PlanOnly -ConfigPath $ConfigPath -StateDirectory $StateDirectory -RunId $RunId -Retry:$Retry -Help:$Help
     exit $global:LASTEXITCODE
 } catch {
-    if ($Json) { [ordered]@{ Ok=$false; Command=$Command; ExitCode=2; Error=$_.Exception.Message } | ConvertTo-Json -Depth 8 -Compress } else { Write-Output "whinset: $($_.Exception.Message)" }
+    if ($Json) { [ordered]@{ Ok=$false; Command=$Command; ExitCode=2; Error=$_.Exception.Message } | ConvertTo-Json -Depth 8 -Compress } else { [Console]::Error.WriteLine("whinset: $($_.Exception.Message)") }
     exit 2
 }

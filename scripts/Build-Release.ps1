@@ -19,7 +19,7 @@ $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $stage = Join-Path ([IO.Path]::GetTempPath()) ('Whinset-stage-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 try {
-    foreach ($file in @('whinset.ps1','whinset.cmd','README.md','LICENSE','CONTRIBUTING.md','SECURITY.md','index.html','.nojekyll')) {
+    foreach ($file in @('whinset.ps1','whinset.cmd','whinset.sh','whinset.nu','README.md','LICENSE','CONTRIBUTING.md','SECURITY.md','index.html','.nojekyll')) {
         $source = Join-Path $root $file
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $stage $file) -Force }
     }
@@ -27,7 +27,7 @@ try {
         $source = Join-Path $root $directory
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $stage $directory) -Recurse -Force }
     }
-    $textExtensions = @('.ps1','.psm1','.psd1','.py','.json','.md','.yml','.yaml','.html','.svg','.toml','.txt','.cmd')
+    $textExtensions = @('.ps1','.psm1','.psd1','.py','.json','.md','.yml','.yaml','.html','.svg','.toml','.txt','.cmd','.sh','.nu')
     foreach ($file in @(Get-ChildItem -LiteralPath $stage -File -Recurse)) {
         $extension = $file.Extension.ToLowerInvariant()
         $isNamedText = $file.Name -in @('LICENSE','.gitignore')

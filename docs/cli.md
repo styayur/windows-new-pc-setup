@@ -8,6 +8,8 @@ whinset <command> [options]
 
 Before installing the command, use `pwsh -NoProfile -File .\whinset.ps1` or `powershell.exe -NoProfile -File .\whinset.ps1`.
 
+CMD uses `whinset.cmd`; Git Bash and Nushell have experimental forwarding adapters. See [shell compatibility](shell-compatibility.md) for quoting, JSON encoding, stderr and exit-code behavior. Different-user UAC credentials are unsupported; see the [security policy](security-model.md).
+
 ## Commands
 
 ### `plan`
