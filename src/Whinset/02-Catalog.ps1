@@ -133,7 +133,10 @@ function Get-WhinsetPackageCandidates {
     if ($exactKey.Count -gt 0) { return $exactKey }
     $exactId = @($Catalog.Packages | Where-Object { $_.Id -ieq $identifier -and (-not $source -or $_.Source -ieq $source) })
     if ($exactId.Count -gt 0) { return $exactId }
-    return @($Catalog.Packages | Where-Object { $_.Name -like "*$needle*" -or $_.Key -like "*$needle*" -or $_.Id -like "*$needle*" -or $_.Vendor -like "*$needle*" } | Sort-Object Name,Key)
+    $matches = @($Catalog.Packages | Where-Object {
+        $_.Name -like "*$needle*" -or $_.Key -like "*$needle*" -or $_.Id -like "*$needle*" -or $_.Vendor -like "*$needle*"
+    })
+    return @($matches | Sort-Object -Property Key)
 }
 
 function Resolve-WhinsetPackageReference {

@@ -1,22 +1,22 @@
 function Write-WhinsetPlanHuman {
     param([Parameter(Mandatory)]$Plan, [switch]$Detailed)
-    Write-Host ''
-    Write-Host ("Whinset {0}  plan {1}" -f $Plan.WhinsetVersion, $Plan.PlanHash.Substring(0,12)) -ForegroundColor Cyan
-    Write-Host ("Host: {0}  Windows build {1}  {2}" -f $Plan.Environment.ComputerName, $Plan.Environment.BuildNumber, $Plan.Environment.Architecture)
-    Write-Host ("Profile: {0}  Groups: {1}" -f $Plan.Request.Profile, (@($Plan.Request.Groups) -join ', '))
-    Write-Host ("Packages: {0} selected, {1} already present, {2} to change, {3} unknown" -f $Plan.Selection.SelectedCount, $Plan.Selection.AlreadyInstalledCount, $Plan.Selection.MissingCount, $Plan.Selection.UnknownCount)
+    Write-Output ''
+    Write-Output ("Whinset {0}  plan {1}" -f $Plan.WhinsetVersion, $Plan.PlanHash.Substring(0,12))
+    Write-Output ("Host: {0}  Windows build {1}  {2}" -f $Plan.Environment.ComputerName, $Plan.Environment.BuildNumber, $Plan.Environment.Architecture)
+    Write-Output ("Profile: {0}  Groups: {1}" -f $Plan.Request.Profile, (@($Plan.Request.Groups) -join ', '))
+    Write-Output ("Packages: {0} selected, {1} already present, {2} to change, {3} unknown" -f $Plan.Selection.SelectedCount, $Plan.Selection.AlreadyInstalledCount, $Plan.Selection.MissingCount, $Plan.Selection.UnknownCount)
     $elevationText = 'none'
     if ([bool]$Plan.Summary.RequiresElevation) {
         if ([int]$Plan.Summary.UacPromptsExpected -eq 1) { $elevationText = 'one UAC authorization, all elevated operations consolidated' }
         else { $elevationText = 'already elevated; no second UAC' }
     }
-    Write-Host ("Elevation: {0}" -f $elevationText)
+    Write-Output ("Elevation: {0}" -f $elevationText)
     $rebootText = 'none expected'
     if ([bool]$Plan.Summary.PendingRebootNow) { $rebootText = 'a restart is already pending' }
     elseif ([bool]$Plan.Summary.RebootPossible) { $rebootText = 'possible; operations stop cleanly and resume after restart' }
-    Write-Host ("Reboot: {0}" -f $rebootText)
-    Write-Host ''
-    Write-Host 'Execution order' -ForegroundColor Cyan
+    Write-Output ("Reboot: {0}" -f $rebootText)
+    Write-Output ''
+    Write-Output 'Execution order'
     $index = 0
     foreach ($operationId in @($Plan.Order)) {
         $operation = @($Plan.Operations | Where-Object { $_.Id -eq $operationId })[0]
@@ -27,27 +27,27 @@ function Write-WhinsetPlanHuman {
         elseif ($operation.Action -eq 'fail-conflict') { $action = 'conflict' }
         $identity = $operation.PackageId
         if (-not $identity) { $identity = $operation.Kind }
-        Write-Host ("{0,2}. [{1,-9}] {2,-30} {3,-28} {4}" -f $index, $action, $operation.Name, $operation.Privilege, $identity)
+        Write-Output ("{0,2}. [{1,-9}] {2,-30} {3,-28} {4}" -f $index, $action, $operation.Name, $operation.Privilege, $identity)
         if ($Detailed -or ($operation.PSObject.Properties['Error'] -and $operation.Error)) {
-            if ($operation.Description) { Write-Host ("    {0}" -f $operation.Description) -ForegroundColor DarkGray }
-            if ($operation.InventoryStatus -and $operation.InventoryStatus -ne 'Unknown') { Write-Host ("    inventory: {0}" -f $operation.InventoryStatus) -ForegroundColor DarkGray }
+            if ($operation.Description) { Write-Output ("    {0}" -f $operation.Description) }
+            if ($operation.InventoryStatus -and $operation.InventoryStatus -ne 'Unknown') { Write-Output ("    inventory: {0}" -f $operation.InventoryStatus) }
         }
     }
     if (@($Plan.Warnings).Count -gt 0) {
-        Write-Host ''
-        Write-Host 'Warnings' -ForegroundColor Yellow
-        foreach ($warning in @($Plan.Warnings)) { Write-Host "  - $warning" -ForegroundColor Yellow }
+        Write-Output ''
+        Write-Output 'Warnings'
+        foreach ($warning in @($Plan.Warnings)) { Write-Output "  - $warning" }
     }
     if (@($Plan.Blockers).Count -gt 0) {
-        Write-Host ''
-        Write-Host 'Blockers' -ForegroundColor Red
-        foreach ($blocker in @($Plan.Blockers)) { Write-Host "  - $blocker" -ForegroundColor Red }
+        Write-Output ''
+        Write-Output 'Blockers'
+        foreach ($blocker in @($Plan.Blockers)) { Write-Output "  - $blocker" }
     }
-    Write-Host ''
-    Write-Host 'Recovery limits' -ForegroundColor Cyan
-    foreach ($limitation in @($Plan.RecoveryLimitations)) { Write-Host "  - $limitation" }
-    Write-Host ''
-    Write-Host 'Review the full plan and software/source licenses. Apply requires -AcceptAgreements.' -ForegroundColor DarkGray
+    Write-Output ''
+    Write-Output 'Recovery limits'
+    foreach ($limitation in @($Plan.RecoveryLimitations)) { Write-Output "  - $limitation" }
+    Write-Output ''
+    Write-Output 'Review the full plan and software/source licenses. Apply requires -AcceptAgreements.'
 }
 
 function Write-WhinsetApplyHuman {
@@ -56,15 +56,15 @@ function Write-WhinsetApplyHuman {
     $color = 'Green'
     if ($Result.ExitCode -eq 3010) { $color = 'Yellow' }
     elseif ($Result.ExitCode -ne 0) { $color = 'Red' }
-    Write-Host ''
-    Write-Host ("Whinset apply: {0} (exit {1})" -f $state.Status, $Result.ExitCode) -ForegroundColor $color
-    Write-Host $state.Detail
-    $state.Operations | Select-Object Name,Privilege,Status,Attempts,Detail,Error | Format-Table -AutoSize | Out-String -Width 240 | Write-Host
-    Write-Host ("State: {0}" -f $Result.Paths.RunDirectory)
-    Write-Host ("Log:   {0}" -f $Result.Paths.EventsPath)
-    if ($Result.PSObject.Properties['Error'] -and $Result.Error) { Write-Host ("Error: {0}" -f $Result.Error) -ForegroundColor Red }
-    if ($Result.ExitCode -eq 3010) { Write-Host 'Restart Windows, then run: whinset recover -Retry' -ForegroundColor Yellow }
-    elseif ($Result.ExitCode -ne 0) { Write-Host 'Run whinset recover for recovery guidance.' -ForegroundColor Yellow }
+    Write-Output ''
+    Write-Output ("Whinset apply: {0} (exit {1})" -f $state.Status, $Result.ExitCode) -ForegroundColor $color
+    Write-Output $state.Detail
+    $state.Operations | Select-Object -Property @('Name','Privilege','Status','Attempts','Detail','Error') | Format-Table -AutoSize | Out-String -Width 240 | Write-Output
+    Write-Output ("State: {0}" -f $Result.Paths.RunDirectory)
+    Write-Output ("Log:   {0}" -f $Result.Paths.EventsPath)
+    if ($Result.PSObject.Properties['Error'] -and $Result.Error) { Write-Output ("Error: {0}" -f $Result.Error) }
+    if ($Result.ExitCode -eq 3010) { Write-Output 'Restart Windows, then run: whinset recover -Retry' }
+    elseif ($Result.ExitCode -ne 0) { Write-Output 'Run whinset recover for recovery guidance.' }
 }
 
 function Get-WhinsetStatusObject {
@@ -90,20 +90,20 @@ function Get-WhinsetStatusObject {
 
 function Write-WhinsetStatusHuman {
     param([Parameter(Mandatory)]$Status)
-    Write-Host ("Whinset state: {0}" -f $Status.StateRoot)
-    if (-not $Status.HasRun) { Write-Host 'No Whinset runs found. Use whinset plan first.' -ForegroundColor DarkGray }
+    Write-Output ("Whinset state: {0}" -f $Status.StateRoot)
+    if (-not $Status.HasRun) { Write-Output 'No Whinset runs found. Use whinset plan first.' }
     else {
         $state = $Status.Latest
-        Write-Host ("Run {0}  {1}  exit {2}  updated {3}" -f $state.RunId, $state.Status, $state.ExitCode, $state.UpdatedAt) -ForegroundColor Cyan
-        $state.Operations | Select-Object Name,Privilege,Status,Attempts,Detail,Error | Format-Table -AutoSize | Out-String -Width 240 | Write-Host
+        Write-Output ("Run {0}  {1}  exit {2}  updated {3}" -f $state.RunId, $state.Status, $state.ExitCode, $state.UpdatedAt)
+        $state.Operations | Select-Object -Property @('Name','Privilege','Status','Attempts','Detail','Error') | Format-Table -AutoSize | Out-String -Width 240 | Write-Output
     }
     if ($Status.Runs.Count -gt 1) {
-        Write-Host 'Recent runs' -ForegroundColor Cyan
-        $Status.Runs | Select-Object -First 10 RunId,Status,ExitCode,UpdatedAt,RunDirectory | Format-Table -AutoSize | Out-String -Width 240 | Write-Host
+        Write-Output 'Recent runs'
+        $Status.Runs | Select-Object -First 10 -Property @('RunId','Status','ExitCode','UpdatedAt','RunDirectory') | Format-Table -AutoSize | Out-String -Width 240 | Write-Output
     }
     if ($Status.LegacyRuns.Count -gt 0) {
-        Write-Host 'Legacy SetupNewPC state (read-only compatibility)' -ForegroundColor Yellow
-        $Status.LegacyRuns | Select-Object -First 10 Status,Profile,UpdatedAt,LegacyStatePath | Format-Table -AutoSize | Out-String -Width 240 | Write-Host
+        Write-Output 'Legacy SetupNewPC state (read-only compatibility)'
+        $Status.LegacyRuns | Select-Object -First 10 -Property @('Status','Profile','UpdatedAt','LegacyStatePath') | Format-Table -AutoSize | Out-String -Width 240 | Write-Output
     }
 }
 
@@ -145,8 +145,8 @@ function Get-WhinsetDoctorReport {
 
 function Write-WhinsetDoctorHuman {
     param([Parameter(Mandatory)]$Report)
-    Write-Host ("Whinset doctor: {0}" -f $Report.Status) -ForegroundColor $(if ($Report.Ok) { 'Green' } else { 'Red' })
-    $Report.Checks | Select-Object Name,Status,Detail | Format-Table -AutoSize | Out-String -Width 240 | Write-Host
+    Write-Output ("Whinset doctor: {0}" -f $Report.Status) -ForegroundColor $(if ($Report.Ok) { 'Green' } else { 'Red' })
+    $Report.Checks | Select-Object -Property @('Name','Status','Detail') | Format-Table -AutoSize | Out-String -Width 240 | Write-Output
 }
 
 function Get-WhinsetResolveResult {
@@ -157,10 +157,10 @@ function Get-WhinsetResolveResult {
 
 function Write-WhinsetResolveHuman {
     param([Parameter(Mandatory)]$Result)
-    if ($Result.Count -eq 0) { Write-Host "No package candidates matched '$($Result.Query)'." -ForegroundColor Yellow; return }
-    Write-Host "Package candidates for '$($Result.Query)'" -ForegroundColor Cyan
-    $Result.Candidates | Select-Object Key,Name,Vendor,@{n='Identity';e={"$($_.Source):$($_.Id)"}},Architecture,Scope,Privilege | Format-Table -AutoSize | Out-String -Width 260 | Write-Host
-    Write-Host 'Use Key or exact Source:Id for plan/apply. Display names are never installation selectors.' -ForegroundColor DarkGray
+    if ($Result.Count -eq 0) { Write-Output "No package candidates matched '$($Result.Query)'."; return }
+    Write-Output "Package candidates for '$($Result.Query)'"
+    $Result.Candidates | ForEach-Object { [pscustomobject][ordered]@{ Key=$_.Key; Name=$_.Name; Vendor=$_.Vendor; Identity="$($_.Source):$($_.Id)"; Architecture=$_.Architecture; Scope=$_.Scope; Privilege=$_.Privilege } } | Format-Table -AutoSize | Out-String -Width 260 | Write-Output
+    Write-Output 'Use Key or exact Source:Id for plan/apply. Display names are never installation selectors.'
 }
 
 function Install-WhinsetCli {

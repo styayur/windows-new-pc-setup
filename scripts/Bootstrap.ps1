@@ -13,7 +13,7 @@ function Get-WhinsetBootstrapManifest {
     $url = $urlMatch.Groups[1].Value
     $expectedUrl = "https://github.com/styayur/whinset/releases/download/$version/Whinset-$version.zip"
     if ($url -ne $expectedUrl) { throw "Bootstrap URL is not the expected pinned release asset. Expected $expectedUrl" }
-    if ($text -match '(?i)Invoke-Expression|\-EncodedCommand|FromBase64String|/main/|/master/') { throw 'Bootstrap contains a forbidden dynamic or unpinned download pattern.' }
+    if ($text -match '(?i)Invoke[-]Expression|[-]EncodedCommand|FromBase64String|/main/|/master/') { throw 'Bootstrap contains a forbidden dynamic or unpinned download pattern.' }
     return [pscustomobject][ordered]@{ Path=(Resolve-WhinsetAbsolutePath -Path $Path); Version=$version; Sha256=$sha; AssetUrl=$url; Text=$text }
 }
 

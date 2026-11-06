@@ -21,8 +21,8 @@ function Assert-Throws([scriptblock]$Action, [string]$Pattern = '*') {
     Assert $caught 'Expected an exception'
 }
 function Test([string]$Name, [scriptblock]$Action) {
-    try { & $Action; $script:passed++; Write-Host "PASS $Name" -ForegroundColor Green }
-    catch { $script:failed++; Write-Host "FAIL $Name : $_`n$($_.ScriptStackTrace)" -ForegroundColor Red }
+    try { & $Action; $script:passed++; Write-Output "PASS $Name" }
+    catch { $script:failed++; Write-Output "FAIL $Name : $_`n$($_.ScriptStackTrace)" }
 }
 function New-TestEnvironment([bool]$IsAdministrator = $false, [bool]$WingetAvailable = $true) {
     return [pscustomobject][ordered]@{
@@ -170,7 +170,11 @@ try {
         if ($script:probeError) { return [pscustomobject][ordered]@{ Installed=$false; VersionVerified=$false; Error=$script:probeError; ExitCode=-1 } }
         return [pscustomobject][ordered]@{ Installed=[bool]$script:probeInstalled; VersionVerified=[bool]$script:probeInstalled; Error=''; ExitCode=$(if ($script:probeInstalled) { 0 } else { -1978335212 }) }
     }
-    function Invoke-WhinsetExternalCommand { param($FilePath,$ArgumentList,$TimeoutSeconds,$WorkingDirectory) throw "Unexpected external command in unit test: $FilePath $($ArgumentList -join ' ')" }
+    function Invoke-WhinsetExternalCommand {
+        param($FilePath,$ArgumentList,$TimeoutSeconds,$WorkingDirectory)
+        $argumentsText = $ArgumentList -join ' '
+        throw "Unexpected external command in unit test: $FilePath $argumentsText"
+    }
     function Invoke-WhinsetPackageOperation {
         param($Plan,$State,$Operation,$Paths)
         $script:adminInstallCalls++
@@ -311,19 +315,19 @@ try {
     }
     Test 'Bootstrap manifest is pinned, human-readable and rejects dynamic execution' {
         $bootstrapPath = Join-Path $root 'beatwin.txt'
-        if (-not (Test-Path -LiteralPath $bootstrapPath)) { Write-Host 'SKIP bootstrap file is a release asset outside the archive' -ForegroundColor Yellow; return }
+        if (-not (Test-Path -LiteralPath $bootstrapPath)) { Write-Output 'SKIP bootstrap file is a release asset outside the archive'; return }
         $bootstrapPath = Join-Path $root 'beatwin.txt'
         $manifest = Get-WhinsetBootstrapManifest -Path $bootstrapPath
         Assert ($manifest.Version -eq 'v2.0.0-rc.1')
         Assert ($manifest.Sha256 -match '^[0-9a-f]{64}$')
         Assert ($manifest.AssetUrl -like '*releases/download/v2.0.0-rc.1/*')
-        Assert ($manifest.Text -notmatch '(?i)Invoke-Expression|-EncodedCommand|FromBase64String|/main/')
+        Assert ($manifest.Text -notmatch '(?i)Invoke[-]Expression|[-]EncodedCommand|FromBase64String|/main/')
         Assert ($manifest.Text -like '*UAC*')
         Assert ($manifest.Text -like '*No automatic rollback*')
     }
     Test 'Bootstrap checksum mismatch is reported' {
         $bootstrapPath = Join-Path $root 'beatwin.txt'
-        if (-not (Test-Path -LiteralPath $bootstrapPath)) { Write-Host 'SKIP bootstrap file is a release asset outside the archive' -ForegroundColor Yellow; return }
+        if (-not (Test-Path -LiteralPath $bootstrapPath)) { Write-Output 'SKIP bootstrap file is a release asset outside the archive'; return }
         $manifest = Get-WhinsetBootstrapManifest -Path (Join-Path $root 'beatwin.txt')
         $fake = Join-Path $testRoot 'fake-archive.zip'
         'not the pinned archive' | Set-Content -LiteralPath $fake -Encoding UTF8
@@ -332,7 +336,7 @@ try {
         Assert ($result.Error -like '*mismatch*')
         $generated = Join-Path $testRoot 'generated-beatwin.txt'
         $fakeHash = (Get-FileHash -LiteralPath $fake -Algorithm SHA256).Hash.ToLowerInvariant()
-        [void](New-WhinsetBootstrapFile -TemplatePath (Join-Path $root 'bootstrap/beatwin.template.txt') -Version 'v2.0.0-rc.1' -Sha256 $fakeHash -OutputPath $generated)
+        $null = New-WhinsetBootstrapFile -TemplatePath (Join-Path $root 'bootstrap/beatwin.template.txt') -Version 'v2.0.0-rc.1' -Sha256 $fakeHash -OutputPath $generated
         $matching = Test-WhinsetBootstrapIntegrity -Path $generated -ArchivePath $fake
         Assert ($matching.Ok)
     }
@@ -432,6 +436,6 @@ try {
     $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
     if ($resolved.StartsWith($temp, [StringComparison]::OrdinalIgnoreCase) -and (Split-Path $resolved -Leaf) -like 'Whinset-tests-*') { Remove-Item -LiteralPath $resolved -Recurse -Force -ErrorAction SilentlyContinue }
 }
-Write-Host "$script:passed passed; $script:failed failed"
+Write-Output "$script:passed passed; $script:failed failed"
 if ($script:failed -gt 0) { exit 1 }
 exit 0

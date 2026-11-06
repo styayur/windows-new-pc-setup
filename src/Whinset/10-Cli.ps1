@@ -57,7 +57,7 @@ function Invoke-Whinset {
             if ($commandKey -eq 'help') { $helpTopic = $Topic } else { $helpTopic = $Command }
             $text = Show-WhinsetHelp -Topic $helpTopic
             if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value ([pscustomobject][ordered]@{ Ok=$true; Command='help'; Text=$text }) -Depth 5) }
-            else { Write-Host $text }
+            else { Write-Output $text }
             $global:LASTEXITCODE = 0
             return
         }
@@ -66,7 +66,7 @@ function Invoke-Whinset {
         switch ($commandKey) {
             'version' {
                 $info = [pscustomobject][ordered]@{ Name='Whinset'; Version=$script:WhinsetVersion; PowerShell=$PSVersionTable.PSVersion.ToString(); Edition=[string]$PSVersionTable.PSEdition; RepositoryRoot=(Get-WhinsetRepositoryRoot) }
-                if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value $info -Depth 8) } else { Write-Host "Whinset $($info.Version)  PowerShell $($info.PowerShell) $($info.Edition)" }
+                if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value $info -Depth 8) } else { Write-Output "Whinset $($info.Version)  PowerShell $($info.PowerShell) $($info.Edition)" }
             }
             'plan' {
                 $plan = New-WhinsetPlan -CatalogPath $ConfigPath -Profile $Profile -Package $Package -Exclude $Exclude -Group $Group -IncludePersonal:$IncludePersonal -SkipStoreApps:$SkipStoreApps -Stage $Stage -ConfigureEnvironment:$ConfigureEnvironment -SkipCondaInit:$SkipCondaInit -EnableWsl:$EnableWsl -EnableDocker:$EnableDocker -DockerSmokeTest:$DockerSmokeTest -ApplicationsOnly:$ApplicationsOnly -MaxAttempts $MaxAttempts -InstallTimeoutSeconds $InstallTimeoutSeconds -Offline:$Offline
@@ -121,10 +121,10 @@ function Invoke-Whinset {
                     $output = [ordered]@{ Ok=$true; ExitCode=0; RunId=$status.Latest.RunId; RunDirectory=$runDirectory; Recovery=$status.Recovery }
                     if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value $output -Depth 40) }
                     else {
-                        Write-Host ("Run {0} status: {1}" -f $status.Latest.RunId, $status.Latest.Status) -ForegroundColor Cyan
-                        Write-Host ("Reboot required: {0}; same boot: {1}" -f $status.Recovery.RebootRequired, $status.Recovery.SameBoot)
-                        if ($status.Recovery.PendingOperations.Count -gt 0) { $status.Recovery.PendingOperations | Select-Object Name,Status,Privilege,Error,@{n='Rollback';e={$_.Recovery.Class}} | Format-Table -AutoSize | Out-String -Width 240 | Write-Host }
-                        Write-Host ("Retry: {0}" -f $status.Recovery.RetryCommand) -ForegroundColor Yellow
+                        Write-Output ("Run {0} status: {1}" -f $status.Latest.RunId, $status.Latest.Status)
+                        Write-Output ("Reboot required: {0}; same boot: {1}" -f $status.Recovery.RebootRequired, $status.Recovery.SameBoot)
+                        if ($status.Recovery.PendingOperations.Count -gt 0) { $status.Recovery.PendingOperations | ForEach-Object { [pscustomobject][ordered]@{ Name=$_.Name; Status=$_.Status; Privilege=$_.Privilege; Error=$_.Error; Rollback=$_.Recovery.Class } } | Format-Table -AutoSize | Out-String -Width 240 | Write-Output }
+                        Write-Output ("Retry: {0}" -f $status.Recovery.RetryCommand)
                     }
                 }
             }
@@ -132,9 +132,9 @@ function Invoke-Whinset {
                 $install = Install-WhinsetCli
                 if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value $install -Depth 12) }
                 else {
-                    Write-Host "Installed Whinset CLI at $($install.InstallRoot)"
-                    Write-Host $install.CommandHint -ForegroundColor Cyan
-                    if ($install.PathAdded) { Write-Host 'The current user PATH was updated. Open a new terminal to use the command.' }
+                    Write-Output "Installed Whinset CLI at $($install.InstallRoot)"
+                    Write-Output $install.CommandHint
+                    if ($install.PathAdded) { Write-Output 'The current user PATH was updated. Open a new terminal to use the command.' }
                 }
             }
         }
@@ -143,7 +143,7 @@ function Invoke-Whinset {
         elseif ($commandKey -in @('help','plan','resolve','apply','recover')) { $exitCode = [int]$script:WhinsetExitCodes.InvalidInput }
         else { $exitCode = [int]$script:WhinsetExitCodes.OperationFailed }
         if ($Json) { Write-Output (ConvertTo-WhinsetJson -Value ([ordered]@{ Ok=$false; Command=$commandKey; ExitCode=$exitCode; Error=$_.Exception.Message }) -Depth 12) }
-        else { Write-Host "whinset: $($_.Exception.Message)" -ForegroundColor Red }
+        else { Write-Output "whinset: $($_.Exception.Message)" }
     }
     $global:LASTEXITCODE = $exitCode
 }

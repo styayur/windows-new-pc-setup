@@ -3,6 +3,28 @@ function New-WhinsetRecovery {
     return [pscustomobject][ordered]@{ Class = $Class; AutomaticRollback = $false; Instructions = $Instructions }
 }
 
+function New-WhinsetConfigOperation {
+    param(
+        [Parameter(Mandatory)][string]$Id,
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Description,
+        [Parameter(Mandatory)][string]$Privilege,
+        [string[]]$DependsOn = @(),
+        [Parameter(Mandatory)][string]$SortKey,
+        [Parameter(Mandatory)][string]$PackageKey,
+        [Parameter(Mandatory)][string]$PackageId,
+        [Parameter(Mandatory)][string]$Scope,
+        [Parameter(Mandatory)]$Recovery
+    )
+    return [pscustomobject][ordered]@{
+        Id=$Id; Kind=$Kind; Name=$Name; Description=$Description; Privilege=$Privilege
+        DependsOn=$DependsOn; Priority=300; SortKey=$SortKey; Action='configure'; InventoryStatus='Unknown'
+        PackageKey=$PackageKey; PackageId=$PackageId; Source='winget'; Architecture='auto'; Scope=$Scope
+        Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=$Recovery
+    }
+}
+
 function New-WhinsetPlan {
     param(
         [Parameter(Mandatory)][string]$CatalogPath,
@@ -114,24 +136,30 @@ function New-WhinsetPlan {
 
     if (-not $ApplicationsOnly -and $ConfigureEnvironment) {
         if ($selectedKeys.ContainsKey('git')) {
-            $operations += [pscustomobject][ordered]@{ Id='config:git-lfs'; Kind='config-git-lfs'; Name='Git LFS'; Description='Install Git LFS hooks for the current user.'; Privilege='user'; DependsOn=@('package:Git'); Priority=300; SortKey='git-lfs'; Action='configure'; InventoryStatus='Unknown'; PackageKey='Git'; PackageId='Git.Git'; Source='winget'; Architecture='auto'; Scope='user'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions='Run git lfs uninstall for the current user if Git LFS hooks are no longer wanted.') }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Run git lfs uninstall for the current user if Git LFS hooks are no longer wanted.'
+            $operations += New-WhinsetConfigOperation -Id 'config:git-lfs' -Kind 'config-git-lfs' -Name 'Git LFS' -Description 'Install Git LFS hooks for the current user.' -Privilege 'user' -DependsOn @('package:Git') -SortKey 'git-lfs' -PackageKey 'Git' -PackageId 'Git.Git' -Scope 'user' -Recovery $recovery
         }
         if ($selectedKeys.ContainsKey('uv') -and $selectedKeys.ContainsKey('systempython')) {
-            $operations += [pscustomobject][ordered]@{ Id='config:uv-python'; Kind='config-uv'; Name='uv Python policy'; Description='Set UV_PYTHON_PREFERENCE=system for the current user.'; Privilege='user'; DependsOn=@('package:uv','package:SystemPython'); Priority=300; SortKey='uv-python'; Action='configure'; InventoryStatus='Unknown'; PackageKey='uv'; PackageId='astral-sh.uv'; Source='winget'; Architecture='auto'; Scope='user'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions='Restore the previous UV_PYTHON_PREFERENCE user environment variable recorded in RecoveryData.') }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Restore the previous UV_PYTHON_PREFERENCE user environment variable recorded in RecoveryData.'
+            $operations += New-WhinsetConfigOperation -Id 'config:uv-python' -Kind 'config-uv' -Name 'uv Python policy' -Description 'Set UV_PYTHON_PREFERENCE=system for the current user.' -Privilege 'user' -DependsOn @('package:uv','package:SystemPython') -SortKey 'uv-python' -PackageKey 'uv' -PackageId 'astral-sh.uv' -Scope 'user' -Recovery $recovery
         }
         if ($selectedKeys.ContainsKey('anaconda')) {
             $instructions = 'Review the PowerShell profile change and conda auto_activate_base setting; reverse them manually if unwanted.'
             if ($SkipCondaInit) { $instructions = 'Only conda auto_activate_base is changed because SkipCondaInit was supplied.' }
-            $operations += [pscustomobject][ordered]@{ Id='config:conda'; Kind='config-conda'; Name='Conda user policy'; Description='Optionally initialize PowerShell and disable automatic base activation.'; Privilege='user'; DependsOn=@('package:Anaconda'); Priority=300; SortKey='conda'; Action='configure'; InventoryStatus='Unknown'; PackageKey='Anaconda'; PackageId='Anaconda.Anaconda3'; Source='winget'; Architecture='auto'; Scope='user'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions=$instructions) }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions $instructions
+            $operations += New-WhinsetConfigOperation -Id 'config:conda' -Kind 'config-conda' -Name 'Conda user policy' -Description 'Optionally initialize PowerShell and disable automatic base activation.' -Privilege 'user' -DependsOn @('package:Anaconda') -SortKey 'conda' -PackageKey 'Anaconda' -PackageId 'Anaconda.Anaconda3' -Scope 'user' -Recovery $recovery
         }
         if ($selectedKeys.ContainsKey('go')) {
-            $operations += [pscustomobject][ordered]@{ Id='config:go'; Kind='config-go'; Name='Go user environment'; Description='Set GOPATH with go env -w for the current user.'; Privilege='user'; DependsOn=@('package:Go'); Priority=300; SortKey='go'; Action='configure'; InventoryStatus='Unknown'; PackageKey='Go'; PackageId='GoLang.Go'; Source='winget'; Architecture='auto'; Scope='user'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions='Inspect go env -w values and restore any previous GOPATH manually.') }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Inspect go env -w values and restore any previous GOPATH manually.'
+            $operations += New-WhinsetConfigOperation -Id 'config:go' -Kind 'config-go' -Name 'Go user environment' -Description 'Set GOPATH with go env -w for the current user.' -Privilege 'user' -DependsOn @('package:Go') -SortKey 'go' -PackageKey 'Go' -PackageId 'GoLang.Go' -Scope 'user' -Recovery $recovery
         }
         if ($selectedKeys.ContainsKey('rustup')) {
-            $operations += [pscustomobject][ordered]@{ Id='config:rust'; Kind='config-rust'; Name='Rust user environment'; Description='Ensure ~/.cargo/bin is on the current user PATH and install the stable toolchain if needed.'; Privilege='user'; DependsOn=@('package:Rustup'); Priority=300; SortKey='rust'; Action='configure'; InventoryStatus='Unknown'; PackageKey='Rustup'; PackageId='Rustlang.Rustup'; Source='winget'; Architecture='auto'; Scope='user'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions='Remove ~/.cargo/bin from the user PATH and uninstall toolchains manually if unwanted.') }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Remove ~/.cargo/bin from the user PATH and uninstall toolchains manually if unwanted.'
+            $operations += New-WhinsetConfigOperation -Id 'config:rust' -Kind 'config-rust' -Name 'Rust user environment' -Description 'Ensure ~/.cargo/bin is on the current user PATH and install the stable toolchain if needed.' -Privilege 'user' -DependsOn @('package:Rustup') -SortKey 'rust' -PackageKey 'Rustup' -PackageId 'Rustlang.Rustup' -Scope 'user' -Recovery $recovery
         }
         if ($selectedKeys.ContainsKey('openjdk21')) {
-            $operations += [pscustomobject][ordered]@{ Id='config:java-home'; Kind='config-java-home'; Name='JAVA_HOME'; Description='Set the machine JAVA_HOME and PATH entry for Microsoft OpenJDK 21.'; Privilege='elevated'; DependsOn=@('package:OpenJDK21'); Priority=300; SortKey='java-home'; Action='configure'; InventoryStatus='Unknown'; PackageKey='OpenJDK21'; PackageId='Microsoft.OpenJDK.21'; Source='winget'; Architecture='auto'; Scope='machine'; Version=$null; VersionPolicy='latest'; ExpectedState='configured'; Reboot='never'; Recovery=(New-WhinsetRecovery -Class 'manual' -Instructions='Restore the previous machine JAVA_HOME and PATH values recorded in RecoveryData.') }
+            $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Restore the previous machine JAVA_HOME and PATH values recorded in RecoveryData.'
+            $operations += New-WhinsetConfigOperation -Id 'config:java-home' -Kind 'config-java-home' -Name 'JAVA_HOME' -Description 'Set the machine JAVA_HOME and PATH entry for Microsoft OpenJDK 21.' -Privilege 'elevated' -DependsOn @('package:OpenJDK21') -SortKey 'java-home' -PackageKey 'OpenJDK21' -PackageId 'Microsoft.OpenJDK.21' -Scope 'machine' -Recovery $recovery
         }
     }
 

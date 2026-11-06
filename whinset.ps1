@@ -106,6 +106,6 @@ try {
     Invoke-Whinset -Command $Command -Topic $Topic -Profile $Profile -Package $Package -Exclude $Exclude -Group $Group -IncludePersonal:$IncludePersonal -SkipStoreApps:$SkipStoreApps -Stage $Stage -ConfigureEnvironment:$ConfigureEnvironment -SkipCondaInit:$SkipCondaInit -EnableWsl:$EnableWsl -EnableDocker:$EnableDocker -DockerSmokeTest:$DockerSmokeTest -ApplicationsOnly:$ApplicationsOnly -MaxAttempts $MaxAttempts -InstallTimeoutSeconds $InstallTimeoutSeconds -AcceptAgreements:$AcceptAgreements -Json:$Json -Offline:$Offline -Detailed:$Detailed -PlanOnly:$PlanOnly -ConfigPath $ConfigPath -StateDirectory $StateDirectory -RunId $RunId -Retry:$Retry -Help:$Help
     exit $global:LASTEXITCODE
 } catch {
-    if ($Json) { [ordered]@{ Ok=$false; Command=$Command; ExitCode=2; Error=$_.Exception.Message } | ConvertTo-Json -Depth 8 -Compress } else { Write-Host "whinset: $($_.Exception.Message)" -ForegroundColor Red }
+    if ($Json) { [ordered]@{ Ok=$false; Command=$Command; ExitCode=2; Error=$_.Exception.Message } | ConvertTo-Json -Depth 8 -Compress } else { Write-Output "whinset: $($_.Exception.Message)" }
     exit 2
 }
