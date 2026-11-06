@@ -41,24 +41,11 @@ try {
 
     $archiveName = "Whinset-$Version.zip"
     $archivePath = Join-Path $OutputDirectory $archiveName
-    Add-Type -AssemblyName System.IO.Compression
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath -Force }
-    $fileStream = [IO.File]::Open($archivePath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
-    try {
-        $archive = New-Object System.IO.Compression.ZipArchive($fileStream, [System.IO.Compression.ZipArchiveMode]::Create, $true)
-        try {
-            $fixedTime = [DateTimeOffset]::Parse('2026-01-01T00:00:00Z')
-            $files = @(Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName)
-            foreach ($file in $files) {
-                $relative = $file.FullName.Substring($stage.Length).TrimStart('\').Replace('\','/')
-                $entry = $archive.CreateEntry($relative, [System.IO.Compression.CompressionLevel]::NoCompression)
-                $entry.LastWriteTime = $fixedTime
-                $input = [IO.File]::OpenRead($file.FullName)
-                try { $output = $entry.Open(); try { $input.CopyTo($output) } finally { $output.Dispose() } } finally { $input.Dispose() }
-            }
-        } finally { $archive.Dispose() }
-    } finally { $fileStream.Dispose() }
+    $python = Get-Command python.exe,python -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $python) { throw 'Python is required to create the deterministic release archive.' }
+    & $python.Source (Join-Path $PSScriptRoot 'Pack-DeterministicZip.py') --source $stage --output $archivePath
+    if ($LASTEXITCODE -ne 0) { throw "Deterministic ZIP creation failed with exit code $LASTEXITCODE." }
+
     $archiveHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $bootstrapPath = Join-Path $root 'beatwin.txt'
     if ($WriteBootstrap) {
