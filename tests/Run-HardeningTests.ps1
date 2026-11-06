@@ -38,7 +38,8 @@ function Fixture {
 # Only this token probe and the actual operation executor are simulated for worker tests.
 function Test-WhinsetIsAdministrator { return $true }
 $script:executed = 0
-function Invoke-WhinsetOperationInternal { param($Plan,$State,$Operation,$Paths) $script:executed++; New-WhinsetOperationResult -Status Succeeded -ExitCode 0 }
+function Invoke-WhinsetOperationInternal { param($Plan,$State,$Operation,$Paths)
+    $script:executed++; New-WhinsetOperationResult -Status Succeeded -ExitCode 0 }
 try {
     Test 'SID policy accepts identical SIDs and rejects different-user credentials' {
         Assert-WhinsetSameUser 'S-1-5-21-1' 'S-1-5-21-1'
@@ -129,7 +130,8 @@ try {
             $script:probes++
             [pscustomobject]@{ Installed=($script:probes -gt 1); VersionVerified=$true; Error=''; ExitCode=0 }
         }
-        function Invoke-WhinsetExternalCommand { param($FilePath,$ArgumentList,$TimeoutSeconds) $script:installs++; throw 'Installer transport interrupted after launch' }
+        function Invoke-WhinsetExternalCommand { param($FilePath,$ArgumentList,$TimeoutSeconds)
+            $script:installs++; throw 'Installer transport interrupted after launch' }
         $operation = $plan.Operations[0]
         $r = Invoke-WhinsetPackageOperation $plan $f.Context.State $operation $f.Context.Paths
         Assert ($r.Status -eq 'AlreadyInstalled' -and $script:installs -eq 1)
@@ -137,7 +139,8 @@ try {
     Test 'Repeated apply package recheck detects removed package after success' {
         $f = Fixture
         foreach ($op in $f.Context.State.Operations) { $op.Status = 'Succeeded' }
-        function Test-WhinsetPackageInstalled { param($Package,[switch]$AcceptAgreements) [pscustomobject]@{ Installed=$false; VersionVerified=$false; Error=''; ExitCode=0 } }
+        function Test-WhinsetPackageInstalled { param($Package,[switch]$AcceptAgreements)
+            [pscustomobject]@{ Installed=$false; VersionVerified=$false; Error=''; ExitCode=0 } }
         Invoke-WhinsetPackagePreflightRecheck $plan $f.Context.State $f.Context.Paths
         Assert (@($f.Context.State.Operations | Where-Object Status -eq Pending).Count -eq $plan.Operations.Count)
     }
