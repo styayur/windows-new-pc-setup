@@ -35,7 +35,7 @@ The archive excludes `beatwin.txt` itself. This avoids a self-referential checks
 
 - stages the release from a fixed file list
 - sorts entries
-- writes deterministic timestamps and compressed entries
+- writes stored ZIP entries with fixed timestamps and attributes through `scripts/Pack-DeterministicZip.py`
 - computes the archive SHA-256
 - regenerates `beatwin.txt` from `bootstrap/beatwin.template.txt`
 - writes `SHA256SUMS.txt`
