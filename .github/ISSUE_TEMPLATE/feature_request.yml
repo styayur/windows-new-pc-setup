@@ -30,6 +30,6 @@ body:
     id: safety
     attributes:
       label: Safety and rollback
-      description: Explain -WhatIf behaviour, administrator requirements, failure modes, and rollback.
+      description: Explain plan behavior, administrator requirements, failure modes, recovery limits and any rollback claims.
     validations:
       required: true

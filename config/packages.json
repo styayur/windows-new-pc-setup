@@ -1,423 +1,1008 @@
 {
-  "SchemaVersion": 1,
+  "SchemaVersion": 2,
+  "CatalogVersion": "2026.11.06",
+  "Profiles": {
+    "minimal": {
+      "Groups": [
+        "Core"
+      ],
+      "Description": "Core Windows setup essentials."
+    },
+    "developer": {
+      "Groups": [
+        "Core",
+        "Developer"
+      ],
+      "Description": "Core plus everyday developer tools."
+    },
+    "ai": {
+      "Groups": [
+        "Core",
+        "Developer",
+        "AI"
+      ],
+      "Description": "Developer tools plus AI applications and CLIs."
+    },
+    "engineering": {
+      "Groups": [
+        "Core",
+        "Developer",
+        "Engineering"
+      ],
+      "Description": "Developer tools plus engineering and scientific software."
+    },
+    "full": {
+      "Groups": [
+        "Core",
+        "Developer",
+        "AI",
+        "Engineering",
+        "Personal"
+      ],
+      "Description": "Every catalog group, including personal preferences."
+    }
+  },
+  "Groups": [
+    "Core",
+    "Developer",
+    "AI",
+    "Engineering",
+    "Personal"
+  ],
   "Packages": [
     {
       "Key": "ClashVerge",
       "Name": "Clash Verge Rev",
+      "Vendor": "Clash Verge Rev",
       "Id": "ClashVergeRev.ClashVergeRev",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id ClashVergeRev.ClashVergeRev --exact --source winget"
+      }
     },
     {
       "Key": "PowerShell7",
       "Name": "PowerShell 7",
+      "Vendor": "Microsoft",
       "Id": "Microsoft.PowerShell",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Core",
       "Groups": [
         "Core"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Microsoft.PowerShell --exact --source winget"
+      }
     },
     {
       "Key": "HiBitUninstaller",
       "Name": "HiBit Uninstaller",
+      "Vendor": "HiBit Software",
       "Id": "HiBitSoftware.HiBitUninstaller",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id HiBitSoftware.HiBitUninstaller --exact --source winget"
+      }
     },
     {
       "Key": "SevenZip",
       "Name": "7-Zip",
+      "Vendor": "7-Zip",
       "Id": "7zip.7zip",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Core",
       "Groups": [
         "Core"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id 7zip.7zip --exact --source winget"
+      }
     },
     {
       "Key": "Git",
       "Name": "Git",
+      "Vendor": "Git Project",
       "Id": "Git.Git",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Core",
       "Groups": [
         "Core"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Git.Git --exact --source winget"
+      }
     },
     {
       "Key": "GitHubCLI",
       "Name": "GitHub CLI",
+      "Vendor": "GitHub",
       "Id": "GitHub.cli",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Core",
       "Groups": [
         "Core"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id GitHub.cli --exact --source winget"
+      }
     },
     {
       "Key": "Chrome",
       "Name": "Google Chrome",
+      "Vendor": "Google",
       "Id": "Google.Chrome",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Core",
       "Groups": [
         "Core"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Google.Chrome --exact --source winget"
+      }
     },
     {
       "Key": "Listary",
       "Name": "Listary",
+      "Vendor": "Bopsoft",
       "Id": "Bopsoft.Listary",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Bopsoft.Listary --exact --source winget"
+      }
     },
     {
       "Key": "CCSwitch",
       "Name": "CC Switch",
+      "Vendor": "farion1231",
       "Id": "farion1231.CC-Switch",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id farion1231.CC-Switch --exact --source winget"
+      }
     },
     {
       "Key": "Notepad3",
       "Name": "Notepad3",
+      "Vendor": "Rizonesoft",
       "Id": "Rizonesoft.Notepad3",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Rizonesoft.Notepad3 --exact --source winget"
+      }
     },
     {
       "Key": "PixPin",
       "Name": "PixPin",
+      "Vendor": "PixPin",
       "Id": "PixPin.PixPin",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id PixPin.PixPin --exact --source winget"
+      }
     },
     {
       "Key": "LibreHardwareMonitor",
       "Name": "LibreHardwareMonitor",
+      "Vendor": "Libre Hardware Monitor",
       "Id": "LibreHardwareMonitor.LibreHardwareMonitor",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id LibreHardwareMonitor.LibreHardwareMonitor --exact --source winget"
+      }
     },
     {
       "Key": "CrystalDiskInfo",
       "Name": "CrystalDiskInfo",
+      "Vendor": "Crystal Dew World",
       "Id": "CrystalDewWorld.CrystalDiskInfo",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id CrystalDewWorld.CrystalDiskInfo --exact --source winget"
+      }
     },
     {
       "Key": "CrystalDiskMark",
       "Name": "CrystalDiskMark",
+      "Vendor": "Crystal Dew World",
       "Id": "CrystalDewWorld.CrystalDiskMark",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id CrystalDewWorld.CrystalDiskMark --exact --source winget"
+      }
     },
     {
       "Key": "SysinternalsSuite",
       "Name": "Sysinternals Suite",
+      "Vendor": "Microsoft",
       "Id": "Microsoft.Sysinternals.Suite",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Microsoft.Sysinternals.Suite --exact --source winget"
+      }
     },
     {
       "Key": "ProcessExplorer",
       "Name": "Process Explorer",
+      "Vendor": "Microsoft",
       "Id": "Microsoft.Sysinternals.ProcessExplorer",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Microsoft.Sysinternals.ProcessExplorer --exact --source winget"
+      }
     },
     {
       "Key": "Steam",
       "Name": "Steam",
+      "Vendor": "Valve",
       "Id": "Valve.Steam",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Valve.Steam --exact --source winget"
+      }
     },
     {
       "Key": "Logseq",
       "Name": "Logseq",
+      "Vendor": "Logseq",
       "Id": "Logseq.Logseq",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Logseq.Logseq --exact --source winget"
+      }
     },
     {
       "Key": "PotPlayer",
       "Name": "PotPlayer",
+      "Vendor": "Daum",
       "Id": "Daum.PotPlayer",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Daum.PotPlayer --exact --source winget"
+      }
     },
     {
       "Key": "Thorium",
       "Name": "Thorium",
+      "Vendor": "Alex313031",
       "Id": "Alex313031.Thorium",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "WindowsBase",
       "Category": "Personal",
       "Groups": [
         "Personal"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Alex313031.Thorium --exact --source winget"
+      }
     },
     {
       "Key": "VSCode",
       "Name": "Visual Studio Code",
+      "Vendor": "Microsoft",
       "Id": "Microsoft.VisualStudioCode",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Microsoft.VisualStudioCode --exact --source winget"
+      }
     },
     {
       "Key": "NodeJS",
       "Name": "Node.js LTS",
+      "Vendor": "OpenJS Foundation",
       "Id": "OpenJS.NodeJS.LTS",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id OpenJS.NodeJS.LTS --exact --source winget"
+      }
     },
     {
       "Key": "SystemPython",
       "Name": "System Python 3.13",
+      "Vendor": "Python Software Foundation",
       "Id": "Python.Python.3.13",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Python.Python.3.13 --exact --source winget"
+      }
     },
     {
       "Key": "uv",
       "Name": "uv",
+      "Vendor": "Astral",
       "Id": "astral-sh.uv",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [
+        "SystemPython"
+      ],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id astral-sh.uv --exact --source winget"
+      }
     },
     {
       "Key": "Postman",
       "Name": "Postman",
+      "Vendor": "Postman",
       "Id": "Postman.Postman",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Postman.Postman --exact --source winget"
+      }
     },
     {
       "Key": "DBeaver",
       "Name": "DBeaver",
+      "Vendor": "DBeaver",
       "Id": "DBeaver.DBeaver.Community",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id DBeaver.DBeaver.Community --exact --source winget"
+      }
     },
     {
       "Key": "OpenJDK21",
       "Name": "Microsoft OpenJDK 21",
+      "Vendor": "Microsoft",
       "Id": "Microsoft.OpenJDK.21",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Microsoft.OpenJDK.21 --exact --source winget"
+      }
     },
     {
       "Key": "Go",
       "Name": "Go",
+      "Vendor": "Go Project",
       "Id": "GoLang.Go",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id GoLang.Go --exact --source winget"
+      }
     },
     {
       "Key": "Rustup",
       "Name": "Rustup",
+      "Vendor": "Rust Project",
       "Id": "Rustlang.Rustup",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Rustlang.Rustup --exact --source winget"
+      }
     },
     {
       "Key": "MinGW",
       "Name": "MinGW-w64 GCC",
+      "Vendor": "Brecht Sanders",
       "Id": "BrechtSanders.WinLibs.POSIX.UCRT",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Developer",
       "Groups": [
         "Developer"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id BrechtSanders.WinLibs.POSIX.UCRT --exact --source winget"
+      }
     },
     {
       "Key": "ChatGPT",
       "Name": "ChatGPT Desktop",
+      "Vendor": "OpenAI",
       "Id": "9PLM9XGG6VKS",
       "Source": "msstore",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "AI",
       "Groups": [
         "AI"
-      ]
+      ],
+      "Privilege": "user",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id 9PLM9XGG6VKS --exact --source msstore"
+      }
     },
     {
       "Key": "CodexCLI",
       "Name": "OpenAI Codex",
+      "Vendor": "OpenAI",
       "Id": "OpenAI.Codex",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "AI",
       "Groups": [
         "AI"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id OpenAI.Codex --exact --source winget"
+      }
     },
     {
       "Key": "Anaconda",
       "Name": "Anaconda",
+      "Vendor": "Anaconda",
       "Id": "Anaconda.Anaconda3",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Anaconda.Anaconda3 --exact --source winget"
+      }
     },
     {
       "Key": "RProject",
       "Name": "R",
+      "Vendor": "R Foundation",
       "Id": "RProject.R",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id RProject.R --exact --source winget"
+      }
     },
     {
       "Key": "RStudio",
       "Name": "RStudio",
+      "Vendor": "Posit",
       "Id": "Posit.RStudio",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [
+        "RProject"
+      ],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Posit.RStudio --exact --source winget"
+      }
     },
     {
       "Key": "KiCad",
       "Name": "KiCad",
+      "Vendor": "KiCad",
       "Id": "KiCad.KiCad",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id KiCad.KiCad --exact --source winget"
+      }
     },
     {
       "Key": "FreeCAD",
       "Name": "FreeCAD",
+      "Vendor": "FreeCAD",
       "Id": "FreeCAD.FreeCAD",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id FreeCAD.FreeCAD --exact --source winget"
+      }
     },
     {
       "Key": "MobaXterm",
       "Name": "MobaXterm",
+      "Vendor": "Mobatek",
       "Id": "Mobatek.MobaXterm",
       "Source": "winget",
+      "Architecture": "auto",
+      "Scope": "auto",
+      "VersionPolicy": "latest",
       "Stage": "Development",
       "Category": "Engineering",
       "Groups": [
         "Engineering"
-      ]
+      ],
+      "Privilege": "elevated",
+      "Dependencies": [],
+      "Conflicts": [],
+      "ExpectedState": "installed",
+      "Reboot": "possible",
+      "Recovery": {
+        "Class": "manual",
+        "AutomaticRollback": false,
+        "Instructions": "Review Windows Settings or run: winget uninstall --id Mobatek.MobaXterm --exact --source winget"
+      }
     }
   ]
 }

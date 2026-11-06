@@ -1,42 +1,69 @@
-# Windows New PC Setup 中文说明
+# Whinset 中文说明
 
-可预览、可审查、可重复执行的 Windows 11 装机工具，以 WinGet JSON 清单选择软件，并显式控制 WSL、Docker 和环境配置。
+**可审查的 Windows 11 装机计划、精确软件 ID、依赖 DAG 与单次 UAC 提权。**
 
-[English README](../README.md) · [配置参考](configuration.md) · [状态、恢复与迁移](operations.md)
+当前源码版本为 **v2.0.0-rc.1**。由于尚未完成真实 Windows 11 虚拟机中的 UAC、系统功能和重启续跑验收，暂不发布最终 v2.0.0。
+
+[English README](../README.md) · [CLI](cli.md) · [软件解析](package-resolution.md) · [安全模型](security-model.md) · [恢复](recovery.md)
+
+## 下载前必须了解
+
+- 管理员操作可能安装机器级软件、启用 Windows 可选功能、安装 WSL/Ubuntu 和 Docker Desktop，并修改机器 `JAVA_HOME`/`PATH`。
+- 用户级操作可能修改 Git LFS、uv、Conda、Go、Rust 和用户环境变量。
+- `apply` 仅在仍有管理员操作时请求一次正常 Windows UAC。不会绕过、关闭或隐藏 UAC。
+- 拒绝 UAC 时不会启动提升后的工作进程，退出码为 **4**。
+- 可能需要重启；Whinset 返回 **3010**，不会自动重启或创建续跑任务。
+- 成功安装和系统修改不会自动回滚。部分注册表、服务、PATH、WSL 和 Docker 状态只能人工恢复。
+- 日志和状态保存在 `%LOCALAPPDATA%\Whinset\v2`。
 
 ## 快速开始
 
-当前受维护源码是 v2 流程；公开最新版 v1.1.0 的默认行为不同，v2.0.0 尚为草稿。请克隆或下载整个当前仓库，不要只下载单个 PS1，也不要套用旧 Release 的命令。
+`beatwin.txt` 默认处于安全预览模式：
+
+1. 下载固定的 `v2.0.0-rc.1` Release 资产。
+2. 先校验固定 SHA-256。
+3. 解压到临时目录。
+4. 运行 `plan`。
+5. 结束后删除临时目录。
+
+审阅计划、软件许可证和恢复限制后，在粘贴内容中把 `$WhinsetMode = 'plan'` 改为 `'apply'`。`apply` 仍会重新构建并验证计划。
+
+## 安装命令
 
 ```powershell
-git clone https://github.com/styayur/windows-new-pc-setup.git
-cd windows-new-pc-setup
-./SetupNewPC_Optimized.ps1 -Profile Minimal -WhatIf | ConvertTo-Json -Depth 8
+pwsh -NoProfile -File .\whinset.ps1 plan -Profile Developer
+pwsh -NoProfile -File .\whinset.ps1 install-cli
 ```
 
-预览不联网、不查询 WinGet、不提权、不创建状态或日志。需要 Windows PowerShell 5.1 或 PowerShell 7；实际执行需要 Windows 11 客户端、64 位当前用户管理员终端、WinGet 1.8+ 和所选软件源的网络访问。审查下载文件，不要默认更改执行策略。
-
-审阅完整清单和软件许可后，在同一 Windows 用户的管理员终端执行：
+打开新终端后：
 
 ```powershell
-./SetupNewPC_Optimized.ps1 -Profile Minimal -AcceptAgreements
-$LASTEXITCODE
+whinset version
+whinset plan -Profile Developer
+whinset apply -Profile Minimal -AcceptAgreements
+whinset status
+whinset doctor
+whinset recover -Retry
 ```
 
-`Minimal` 选择五个 Core 包；省略 `-Profile` 默认是 Developer。`Full` 包含个人偏好工具，但不会自动启用 WSL/Docker/WinUtil。安装器自身可能修改 PATH、服务和系统设置；可撤销不代表脚本有自动回滚。
+## 软件选择
 
-## 常用入口
+使用稳定的 `Key` 或精确的 `Source:Id`：
 
 ```powershell
-./SetupNewPC_Optimized.ps1 -Profile Developer -SkipStoreApps -WhatIf
-./Install-Applications.WithConfirmation.ps1 -Profile Minimal -WhatIf
-# 完成审阅后才传 -AcceptAgreements；逐项入口仍需对缺少的包输入 Y。
+whinset plan -Profile Minimal -Exclude Chrome
+whinset plan -Profile Developer -Package uv,Git
+whinset resolve chrome
 ```
 
-配置清单和可选功能见[配置参考](configuration.md)。退出码 3010 时保存工作、手动重启，再执行相同命令。状态与日志默认在 `%LOCALAPPDATA%/SetupNewPC/v2/<配置哈希>/`；0 为所选阶段完成，1 失败，2 参数/前置检查失败，3 用户跳过，3010 待重启。状态不能跨机器/账号作为成功凭据。
+显示名称不会作为安装选择器。同名/近似包必须通过 `Key` 或 `winget:<id>` / `msstore:<id>` 明确指定。依赖会自动加入；循环依赖、未知依赖和冲突会在执行前失败。
 
-**没有自动卸载或回滚。** 成功安装和系统修改会保留。删除脚本或状态目录不会撤销它们；真实装机前准备可恢复备份。详见[恢复、移除和旧版迁移](operations.md)。旧 DSC 位于 [legacy](../legacy/README.md)，不是当前入口。
+## 退出码
 
-真实应用安装、重启及 WSL/Docker 验收需可恢复的 Windows 11 虚拟机；模拟测试不等于端到端验收。见[验收清单](../tests/VM-CHECKLIST.md)。
+`0` 完成，`1` 操作失败，`2` 输入/计划/协议错误，`3` 兼容流程取消，`4` 拒绝 UAC，`5` doctor 不健康，`3010` 需要重启。
 
-[MIT](../LICENSE) · [贡献与测试](../CONTRIBUTING.md) · [安全报告](../SECURITY.md)
+## 兼容性
+
+旧的 `SetupNewPC_Optimized.ps1`、`Setupnewpc.ps1`、逐项确认脚本、schema 1 清单和旧状态目录仍保留。新命令只读发现旧 `SetupNewPC\v2` 状态；迁移方式是重新运行 `whinset plan`/`apply`，按实际安装状态补缺，不删除旧状态。
+
+MIT License.

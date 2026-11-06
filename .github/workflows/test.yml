@@ -16,17 +16,55 @@ concurrency:
 jobs:
   windows-powershell:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - name: Run regression suite on Windows PowerShell 5.1
+      - name: Legacy suite on Windows PowerShell 5.1
         shell: powershell
         run: ./tests/Run-Tests.ps1
+      - name: Whinset suite on Windows PowerShell 5.1
+        shell: powershell
+        run: ./tests/Run-WhinsetTests.ps1
+
   powershell-core:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Legacy suite on PowerShell 7
+        shell: pwsh
+        run: ./tests/Run-Tests.ps1
+      - name: Whinset suite on PowerShell 7
+        shell: pwsh
+        run: ./tests/Run-WhinsetTests.ps1
+
+  metadata-and-completion:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - name: Run regression suite on PowerShell 7
+      - name: Parse all PowerShell files
         shell: pwsh
-        run: ./tests/Run-Tests.ps1
+        run: |
+          $errors = @()
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens=$null; $parseErrors=$null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { $errors += $parseErrors }
+          }
+          if ($errors.Count -gt 0) { $errors | Out-String | Write-Error; exit 1 }
+      - name: Validate module and JSON output
+        shell: pwsh
+        run: |
+          ./whinset.ps1 version -Json | ConvertFrom-Json | Out-Null
+          $doctor = ./whinset.ps1 doctor -Json
+          $doctorCode = $LASTEXITCODE
+          $doctor | ConvertFrom-Json | Out-Null
+          if ($doctorCode -notin @(0,5)) { exit $doctorCode }
+      - name: Validate tab completion
+        shell: pwsh
+        run: |
+          Import-Module ./src/Whinset.psd1 -Force
+          $s = 'whinset '
+          $completionMatches = @(TabExpansion2 $s $s.Length).CompletionMatches.CompletionText
+          if ($completionMatches -notcontains 'plan' -or $completionMatches -notcontains 'doctor') { throw 'Whinset command completion is incomplete.' }

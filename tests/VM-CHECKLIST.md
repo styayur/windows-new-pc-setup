@@ -1,18 +1,56 @@
-# Windows 11 虚拟机验收
+# Windows 11 VM acceptance - Whinset v2.0.0-rc.1
 
-自动化回归测试不代替以下真实系统验证。请在有快照的 Windows 11 虚拟机使用同一测试用户，记录 OS / PowerShell / WinGet 版本、执行命令、状态目录和退出码。
+Automated/mocked tests do not replace real Windows acceptance. Use a recoverable Windows 11 VM snapshot. Record OS build, PowerShell versions, WinGet version, exact commands, run directories and exit codes.
 
-- [ ] Windows PowerShell 5.1 与 PowerShell 7：普通终端预览不弹 UAC，不创建状态；执行缺少权限时退出 2。
-- [ ] 自定义只含 7-Zip / Git 的清单：首次安装后退出 0；第二次不启动安装器；卸载其中一个后只补装该项。
-- [ ] 无网络或无效包 ID：记录失败并继续其他包，退出 1；恢复网络或修正清单后重试成功。
-- [ ] 逐项模式输入 N：该包不安装，最终退出 3；下一次仍会询问。
-- [ ] 使用实际可用版本验证 Version 安装/核验；已有不同版本时报冲突，不升级或降级。
-- [ ] 开启 WSL：首次功能启用后保存状态并返回 3010；同一启动周期重跑不继续；重启后同一命令完成基础包补装与 Ubuntu 初始化准备。
-- [ ] 未启用固件虚拟化时：明确报告阻断，不报告 WSL/Docker 成功。
-- [ ] Docker：安装后未启动 daemon 记录警告；手动首次启动后重跑正常；显式 smoke test 能运行 hello-world。
-- [ ] Ctrl+C 中断后状态仍可解析；重跑能核验实际安装结果。
-- [ ] 两个终端并发执行：第二个在系统变更前被互斥锁阻止。
-- [ ] 自定义目录含空格及中文：状态、日志、重试均正常。
-- [ ] 没有创建续跑任务、自动重启、下载 WinUtil 或全局修改执行策略。
+## Release gate
 
-第三方安装器和 WSL/Store 行为会随版本变化。发布时把实际完成的结果写入发布记录，不把未执行的项目视为通过。
+- [ ] Windows 11 client build 22000+.
+- [ ] PowerShell 7 and Windows PowerShell 5.1 can run `whinset version`, `doctor` and `plan`.
+- [ ] `plan`/`-WhatIf` requests no UAC and creates no Whinset run state.
+- [ ] `apply` without `-AcceptAgreements` exits 2 and creates no run state.
+- [ ] One UAC prompt consolidates a request with multiple missing machine packages; no second prompt appears.
+- [ ] UAC denial exits 4, records `ElevationDenied`, starts no installer, and leaves pending state recoverable.
+- [ ] Already-elevated execution does not request a second UAC.
+- [ ] A mix of user and machine operations executes user configuration outside the elevated worker.
+
+## Package reconciliation
+
+- [ ] Clean VM: a two-package test plan installs both, then a second apply starts no installers.
+- [ ] Pre-installed packages are reported `AlreadyInstalled`, not newly installed.
+- [ ] Remove one package, rerun, and only that package is installed.
+- [ ] Unknown invalid package ID fails with useful source/ID evidence.
+- [ ] Ambiguous ID/source fixture fails without installation; source-qualified or stable Key succeeds.
+- [ ] Pinned-version conflict does not upgrade/downgrade.
+- [ ] Installer timeout stops later installers and leaves a recoverable state.
+- [ ] Ctrl+C/interruption leaves parseable state; rerun rechecks actual inventory.
+
+## Reboot and features
+
+- [ ] Installer exit 3010 records `AwaitingReboot`; same-boot retry returns 3010 without a new installer.
+- [ ] After restart, boot ID changes and pending work resumes.
+- [ ] WSL optional-feature activation records restart correctly.
+- [ ] WSL 2 + Ubuntu validation succeeds after restart and manual first-run readiness.
+- [ ] Firmware virtualization disabled produces a clear blocker, not false success.
+- [ ] Docker Desktop installation/daemon readiness behaves as documented; optional hello-world smoke test passes when requested.
+
+## Recovery and logs
+
+- [ ] `operations.jsonl` parses entirely as JSON lines and records run/elevation/operation lifecycle.
+- [ ] `state.json` remains parseable after interruption and preserves `.bak`.
+- [ ] `status`, `recover` and `recover -Retry` point to the expected run.
+- [ ] Legacy `%LOCALAPPDATA%\SetupNewPC\v2` state appears read-only in `whinset status` and is not modified.
+- [ ] State path with spaces/Chinese characters works.
+- [ ] Two concurrent applies do not corrupt state or start duplicate installers.
+
+## Bootstrap and release
+
+- [ ] `beatwin.txt` plan mode downloads the pinned asset, validates SHA-256, runs plan, and removes its temp directory.
+- [ ] A deliberately corrupted archive fails before extraction/execution.
+- [ ] `beatwin.txt` apply mode runs the reviewed plan and uses the one-UAC flow.
+- [ ] `SHA256SUMS.txt` matches `Whinset-v2.0.0-rc.1.zip` and `beatwin.txt`.
+- [ ] Release archive contains no `beatwin.txt` self-reference and includes `whinset.ps1`, `src`, `config`, tests and docs.
+- [ ] No `Invoke-Expression`, encoded payload, `main` archive URL, UAC bypass or automatic rollback claim appears.
+
+## Sign-off
+
+Record each item as PASS, FAIL or NOT RUN. Do not mark final `v2.0.0` published until all release-gate items have evidence.

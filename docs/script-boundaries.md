@@ -1,14 +1,26 @@
-# Script boundaries
-
-The repository intentionally keeps one active engine and two narrow compatibility/alternate entrypoints.
+# Script and module boundaries
 
 | Path | Status | Purpose |
 | --- | --- | --- |
-| `SetupNewPC_Optimized.ps1` | Canonical | Full preview, package installation, optional environment/WSL/Docker setup |
-| `Setupnewpc.ps1` | Compatibility wrapper | Forwards existing calls to the canonical script |
-| `Install-Applications.WithConfirmation.ps1` | Alternate mode | Applications-only flow with per-package confirmation |
-| `legacy/` | Historical | Archived v1/DSC material; do not mix with the v2 workflow |
-| `src/Configuration.ps1` | Internal | Catalog parsing and validation |
-| `src/SetupNewPC.Core.ps1` | Internal | State, package, environment, and install orchestration |
+| `whinset.ps1` | Canonical entrypoint | New Whinset CLI |
+| `whinset.cmd` | Canonical CMD shim | Calls `whinset.ps1` with `pwsh` or Windows PowerShell |
+| `src/Whinset.psd1` | Module manifest | `Invoke-Whinset` and `whinset` alias |
+| `src/Whinset.psm1` | Module loader | Loads compatibility helpers and `src/Whinset/*` |
+| `src/Whinset.ElevatedWorker.ps1` | Elevated entrypoint | Validates and executes the trusted elevated phase |
+| `src/Configuration.ps1` | Compatibility parser | Reads schema 1/2 catalogs for legacy scripts |
+| `src/SetupNewPC.Core.ps1` | Legacy engine | Existing full setup behavior and native process helper |
+| `SetupNewPC_Optimized.ps1` | Legacy canonical script | Preserved existing flow and per-stage behavior |
+| `Setupnewpc.ps1` | Compatibility wrapper | Forwards legacy calls |
+| `Install-Applications.WithConfirmation.ps1` | Legacy alternate flow | Applications-only per-package Y/N prompts |
+| `beatwin.txt` | Release bootstrap | Pinned download, SHA-256, safe plan/apply entry |
+| `scripts/Build-Release.ps1` | Release tooling | Deterministic archive and bootstrap checksum generation |
+| `legacy/` | Historical material | Archived v1/DSC inputs; not current entrypoints |
 
-The canonical script is side-effect free in `-WhatIf` mode. Real execution requires administrator context where the OS demands it, explicit `-AcceptAgreements`, and a reviewed profile/catalog. Tests replace external command execution with mocks.
+## Authority
+
+- New CLI: `whinset.ps1` / module.
+- New execution planner: `src/Whinset/05-Plan.ps1`.
+- New privilege worker: `src/Whinset/07-Apply.ps1` and `src/Whinset.ElevatedWorker.ps1`.
+- Legacy behavior: `SetupNewPC_Optimized.ps1` and `src/SetupNewPC.Core.ps1`.
+
+Do not mix legacy `state.json` with the new run state. Legacy state is read only by the new status command.
