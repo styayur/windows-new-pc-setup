@@ -60,11 +60,11 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $false
           $doctorOutput = @(& ./whinset.ps1 doctor -Json 2>&1)
           $doctorCode = $LASTEXITCODE
-          Write-Host "doctor exit code: $doctorCode"
-          $doctorOutput | ForEach-Object { Write-Host $_ }
           $doctorText = $doctorOutput -join [Environment]::NewLine
           $doctorText | ConvertFrom-Json | Out-Null
           if ($doctorCode -notin @(0,5)) { throw "doctor failed with exit code $doctorCode" }
+          $global:LASTEXITCODE = 0
+          exit 0
       - name: Validate tab completion
         shell: pwsh
         run: |
