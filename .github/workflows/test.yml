@@ -58,10 +58,13 @@ jobs:
         run: |
           ./whinset.ps1 version -Json | ConvertFrom-Json | Out-Null
           $PSNativeCommandUseErrorActionPreference = $false
-          $doctor = ./whinset.ps1 doctor -Json
+          $doctorOutput = @(& ./whinset.ps1 doctor -Json 2>&1)
           $doctorCode = $LASTEXITCODE
-          $doctor | ConvertFrom-Json | Out-Null
-          if ($doctorCode -notin @(0,5)) { exit $doctorCode }
+          Write-Host "doctor exit code: $doctorCode"
+          $doctorOutput | ForEach-Object { Write-Host $_ }
+          $doctorText = $doctorOutput -join [Environment]::NewLine
+          $doctorText | ConvertFrom-Json | Out-Null
+          if ($doctorCode -notin @(0,5)) { throw "doctor failed with exit code $doctorCode" }
       - name: Validate tab completion
         shell: pwsh
         run: |
