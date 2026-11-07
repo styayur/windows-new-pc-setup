@@ -165,6 +165,11 @@ try {
     $script:elevationMode = 'grant'
     $script:adminInstallCalls = 0
     function Get-WhinsetMachineIdentity { [pscustomobject][ordered]@{ ComputerName='TEST-PC'; UserSid='S-1-5-21-TEST' } }
+    # This suite simulates orchestration. Real temporary-file ACL checks live in Run-HardeningTests.ps1.
+    function Initialize-WhinsetPrivateRunDirectory { param($Path)
+        New-Item -ItemType Directory -Path $Path -Force | Out-Null }
+    function Assert-WhinsetPrivatePath { param($Path,$UserSid) }
+    function Test-WhinsetIsAdministrator { return $true }
     function Test-WhinsetPackageInstalled {
         param($Package, [switch]$AcceptAgreements)
         if ($script:probeError) { return [pscustomobject][ordered]@{ Installed=$false; VersionVerified=$false; Error=$script:probeError; ExitCode=-1 } }

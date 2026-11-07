@@ -38,12 +38,12 @@ function Reset-WhinsetStateForReconcile {
 function Get-WhinsetRunContext {
     param([Parameter(Mandatory)]$Plan, [Parameter(Mandatory)]$Environment, [Parameter(Mandatory)][string]$StateRoot)
     $paths = Get-WhinsetRunPaths -StateRoot $StateRoot -PlanHash $Plan.PlanHash
-    if (-not (Test-Path -LiteralPath $paths.RunDirectory)) { New-Item -ItemType Directory -Path $paths.RunDirectory -Force | Out-Null }
+    Initialize-WhinsetPrivateRunDirectory -Path $paths.RunDirectory
     $fresh = New-WhinsetRunState -Plan $Plan -Environment $Environment -Paths $paths
     $state = $null
     if (Test-Path -LiteralPath $paths.StatePath) {
         $state = Read-WhinsetRunState -Path $paths.StatePath
-        if ([string]$state.PlanHash -ne [string]$Plan.PlanHash) { throw 'Existing state belongs to a different plan.' }
+        Assert-WhinsetStateMatchesPlan -State $state -Plan $Plan
         if ($state.Status -eq 'AwaitingReboot' -and [string]$state.BootId -eq [string](Get-WhinsetBootId)) {
             Write-WhinsetJsonFileAtomically -Path $paths.PlanPath -Value $Plan
             return [pscustomobject][ordered]@{ Paths=$paths; State=$state; RebootGate=$true; ReusedState=$true }
@@ -51,7 +51,11 @@ function Get-WhinsetRunContext {
         if ($state.Status -eq 'Complete') {
             Reset-WhinsetStateForReconcile -State $state -Plan $Plan -FreshState $fresh
         } else {
-            if ([string]$state.BootId -ne [string](Get-WhinsetBootId)) { $state.BootId = [string](Get-WhinsetBootId) }
+            if ([string]$state.BootId -ne [string](Get-WhinsetBootId)) {
+                $state.BootId = [string](Get-WhinsetBootId)
+                $state.RebootRequired = $false
+                foreach ($record in @($state.Operations)) { $record.RebootRequired = $false }
+            }
             foreach ($record in @($state.Operations)) {
                 if ($record.Status -in @('Running','Failed','AwaitingReboot','Blocked')) {
                     $record.Status = 'Pending'
@@ -90,8 +94,6 @@ function Write-WhinsetRunReport {
 }
 
 function Get-WhinsetPowerShellExecutable {
-    $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
-    if ($pwsh) { return $pwsh.Source }
     $processPath = (Get-Process -Id $PID).Path
     if ($processPath) { return $processPath }
     return (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe')
@@ -121,14 +123,22 @@ function Invoke-WhinsetElevation {
         $process = Start-Process -FilePath $powerShell -ArgumentList $argumentString -Verb RunAs -WindowStyle Hidden -Wait -PassThru -ErrorAction Stop
     } catch {
         $message = $_.Exception.Message
-        $denied = ($message -match '(?i)cancel|cancelled|canceled|取消|用户已取消')
-        Write-WhinsetRunEvent -RunDirectory $Paths.RunDirectory -Type 'elevation.exception' -Data @{ Denied=$denied; Error=$message }
+        $nativeCode = Get-WhinsetNativeErrorCode -Exception $_.Exception
+        $denied = ($nativeCode -eq 1223)
+        Write-WhinsetRunEvent -RunDirectory $Paths.RunDirectory -Type 'elevation.exception' -Data @{ Denied=$denied; NativeErrorCode=$nativeCode; Error=$message }
         return [pscustomobject][ordered]@{ Granted=$false; Denied=$denied; ExitCode=$null; Error=$message; Result=$null }
     }
     $processExit = $null
     try { $processExit = $process.ExitCode } catch { }
     if (Test-Path -LiteralPath $Paths.ElevatedResultPath) {
-        $result = Read-WhinsetJsonFile -Path $Paths.ElevatedResultPath
+        try {
+            $result = Read-WhinsetJsonFile -Path $Paths.ElevatedResultPath
+            if ($result.SchemaVersion -ne 1 -or $result.Nonce -cne $nonce -or $result.PlanHash -cne $Plan.PlanHash -or $result.RunId -ne $Plan.RunId -or $null -eq $processExit -or [int]$result.ExitCode -ne [int]$processExit) { throw 'Elevated result identity, nonce or process exit code does not match.' }
+        } catch {
+            $errorText = $_.Exception.Message
+            Write-WhinsetRunEvent -RunDirectory $Paths.RunDirectory -Type 'elevation.invalid-result' -Data @{ ExitCode=$processExit; Error=$errorText }
+            return [pscustomobject]@{ Granted=$true; Denied=$false; ExitCode=$processExit; Error=$errorText; Result=$null }
+        }
         Write-WhinsetRunEvent -RunDirectory $Paths.RunDirectory -Type 'elevation.end' -Data @{ ExitCode=$result.ExitCode; Error=$result.Error }
         return [pscustomobject][ordered]@{ Granted=$true; Denied=$false; ExitCode=$result.ExitCode; Error=[string]$result.Error; Result=$result }
     }
@@ -143,13 +153,23 @@ function Invoke-WhinsetElevatedWorker {
     $resultPath = Join-Path $runDirectory 'elevated-result.json'
     $statePath = Join-Path $runDirectory 'state.json'
     $requestPath = Join-Path $runDirectory 'elevation-request.json'
+    $validated = $false
     try {
+        if (-not (Test-WhinsetIsAdministrator)) { throw 'Elevated worker requires an administrator token.' }
+        $currentSid = [string](Get-WhinsetMachineIdentity).UserSid
+        foreach ($path in @($runDirectory,$PlanPath,$statePath,$requestPath)) { Assert-WhinsetPrivatePath -Path $path -UserSid $currentSid }
         if (-not (Test-Path -LiteralPath $requestPath)) { throw 'Elevation request file is missing.' }
         $request = Read-WhinsetJsonFile -Path $requestPath
         if ([string]$request.Nonce -ne $Nonce -or [string]$request.PlanHash -ne $PlanHash) { throw 'Elevation request nonce or plan hash does not match.' }
         $plan = Get-WhinsetTrustedPlan -PlanPath $PlanPath -ExpectedPlanHash $PlanHash
         $state = Read-WhinsetRunState -Path $statePath
-        if ([string]$state.PlanHash -ne $PlanHash) { throw 'State plan hash does not match the elevation request.' }
+        Assert-WhinsetElevationRequest -Request $request -Plan $plan -State $state -PlanPath $PlanPath -PlanHash $PlanHash -Nonce $Nonce
+        $expectedDirectory = Join-Path (Split-Path $runDirectory -Parent) $PlanHash
+        if ([IO.Path]::GetFullPath($runDirectory) -ine [IO.Path]::GetFullPath($expectedDirectory)) { throw 'Run directory does not match plan hash.' }
+        $claimPath = Join-Path $runDirectory ('elevation-consumed-' + $Nonce)
+        $claim = [IO.File]::Open($claimPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+        $claim.Dispose()
+        $validated = $true
         $state.ElevatedUserSid = [string](Get-WhinsetMachineIdentity).UserSid
         $state.Elevation.Attempted = $true
         $state.Elevation.AlreadyElevated = $false
@@ -162,13 +182,16 @@ function Invoke-WhinsetElevatedWorker {
         $exitCode = 0
         if ($statuses -contains 'AwaitingReboot') { $exitCode = [int]$script:WhinsetExitCodes.RebootRequired }
         elseif ($statuses -contains 'Failed' -or $statuses -contains 'Blocked') { $exitCode = [int]$script:WhinsetExitCodes.OperationFailed }
-        $result = [pscustomobject][ordered]@{ SchemaVersion=1; RunId=$plan.RunId; PlanHash=$PlanHash; ExitCode=$exitCode; Status='ElevatedPhaseFinished'; Error=''; FinishedAt=(Get-WhinsetTimestamp) }
+        $result = [pscustomobject][ordered]@{ SchemaVersion=1; Nonce=$Nonce; RunId=$plan.RunId; PlanHash=$PlanHash; ExitCode=$exitCode; Status='ElevatedPhaseFinished'; Error=''; FinishedAt=(Get-WhinsetTimestamp) }
         Write-WhinsetJsonFileAtomically -Path $resultPath -Value $result
         Write-WhinsetRunEvent -RunDirectory $runDirectory -Type 'elevated-worker.end' -Data @{ ExitCode=$exitCode }
         return $result
     } catch {
-        $result = [pscustomobject][ordered]@{ SchemaVersion=1; RunId=$null; PlanHash=$PlanHash; ExitCode=1; Status='ElevatedPhaseFailed'; Error=$_.Exception.Message; FinishedAt=(Get-WhinsetTimestamp) }
-        try { Write-WhinsetJsonFileAtomically -Path $resultPath -Value $result } catch { }
+        $result = [pscustomobject][ordered]@{ SchemaVersion=1; Nonce=$Nonce; RunId=$null; PlanHash=$PlanHash; ExitCode=1; Status='ElevatedPhaseFailed'; Error=$_.Exception.Message; FinishedAt=(Get-WhinsetTimestamp) }
+        if ($validated) {
+            $result.RunId = $plan.RunId
+            try { Write-WhinsetJsonFileAtomically -Path $resultPath -Value $result } catch { }
+        }
         throw
     }
 }
@@ -178,7 +201,7 @@ function Invoke-WhinsetPackagePreflightRecheck {
     $changed = $false
     foreach ($operation in @($Plan.Operations | Where-Object { $_.Kind -eq 'package' })) {
         $record = Get-WhinsetOperationRecord -State $State -OperationId $operation.Id
-        if ($record -and (Test-WhinsetOperationTerminalSuccess -Status $record.Status)) { continue }
+        # Recheck packages even when a partial prior run recorded success.
         $package = [pscustomobject][ordered]@{ Key=$operation.PackageKey; Id=$operation.PackageId; Source=$operation.Source; Architecture=$operation.Architecture; Scope=$operation.Scope; Version=$operation.Version; VersionPolicy=$operation.VersionPolicy }
         $probe = Test-WhinsetPackageInstalled -Package $package -AcceptAgreements
         if ($probe.Installed -and ($package.VersionPolicy -ne 'pinned' -or $probe.VersionVerified)) {
@@ -204,6 +227,7 @@ function Invoke-WhinsetPackagePreflightRecheck {
 function Invoke-WhinsetApplyPlanUnlocked {
     param([Parameter(Mandatory)]$Plan, [Parameter(Mandatory)][string]$StateRoot, [switch]$AcceptAgreements)
     if (-not $AcceptAgreements) { throw 'Review the plan and software/source licenses, then pass -AcceptAgreements to execute.' }
+    Assert-WhinsetSameUser -OriginalUserSid $Plan.Environment.UserSid -CurrentUserSid ([string](Get-WhinsetMachineIdentity).UserSid)
     $trust = Test-WhinsetPlanTrust -Plan $Plan
     if (-not $trust.Valid) { throw ('Plan validation failed: ' + ($trust.Errors -join ' ')) }
     if (@($Plan.Blockers).Count -gt 0) { throw ('Apply is blocked: ' + (@($Plan.Blockers) -join ' ')) }
@@ -237,7 +261,7 @@ function Invoke-WhinsetApplyPlanUnlocked {
                 $elevation = Invoke-WhinsetElevation -Plan $Plan -Paths $paths
                 if (-not $elevation.Granted) {
                     $state = Read-WhinsetRunState -Path $paths.StatePath
-                    $state.Status = 'ElevationDenied'
+                    if ($elevation.Denied) { $state.Status = 'ElevationDenied' } else { $state.Status = 'CompletedWithFailures' }
                     if ($elevation.Denied) { $state.Detail = 'Administrator authorization was declined. No elevated operation was started.' }
                     else { $state.Detail = "Elevation failed before the worker started: $($elevation.Error)" }
                     $state.Elevation.Denied = [bool]$elevation.Denied

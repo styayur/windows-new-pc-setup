@@ -12,8 +12,8 @@ function New-WhinsetConfigOperation {
         [Parameter(Mandatory)][string]$Privilege,
         [string[]]$DependsOn = @(),
         [Parameter(Mandatory)][string]$SortKey,
-        [Parameter(Mandatory)][string]$PackageKey,
-        [Parameter(Mandatory)][string]$PackageId,
+        [string]$PackageKey = '',
+        [string]$PackageId = '',
         [Parameter(Mandatory)][string]$Scope,
         [Parameter(Mandatory)]$Recovery
     )
@@ -119,21 +119,27 @@ function New-WhinsetPlan {
             Recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Disable the Windows optional features manually only if they are not needed by another workload.'
         }
         $operations += [pscustomobject][ordered]@{
-            Id = 'system:wsl-runtime'; Kind = 'wsl-runtime'; Name = 'WSL 2 runtime'; Description = 'Update WSL, default to version 2 and verify an Ubuntu distribution without first-run initialization.'
+            Id = 'system:wsl-runtime'; Kind = 'wsl-runtime'; Name = 'WSL 2 runtime'; Description = 'Update the machine WSL runtime.'
             Privilege = 'elevated'; DependsOn = @('system:wsl-features'); Priority = 250; SortKey = 'wsl-runtime'; Action = 'configure'; InventoryStatus = 'Unknown'
             PackageKey = $null; PackageId = $null; Source = 'windows'; Architecture = 'auto'; Scope = 'machine'; Version = $null; VersionPolicy = 'latest'; ExpectedState = 'enabled'; Reboot = 'possible'
-            Recovery = New-WhinsetRecovery -Class 'manual' -Instructions = 'Remove the Ubuntu distribution and disable WSL features manually if no longer required.'
+            Recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Remove the Ubuntu distribution and disable WSL features manually if no longer required.'
         }
+    }
+    if (-not $ApplicationsOnly -and ($EnableWsl -or $EnableDocker)) {
+        $operations += New-WhinsetConfigOperation -Id 'user:wsl-distribution' -Kind 'wsl-distribution' -Name 'Ubuntu for original user' -Description 'Install/register Ubuntu and configure WSL 2 in the original user context.' -Privilege 'user' -DependsOn @('system:wsl-runtime') -SortKey 'wsl-distribution' -Scope 'user' -Recovery (New-WhinsetRecovery -Class 'manual' -Instructions 'Review and unregister the user distribution manually only after backing up its data.')
     }
     if (-not $ApplicationsOnly -and $EnableDocker) {
         $operations += [pscustomobject][ordered]@{
-            Id = 'system:docker'; Kind = 'docker'; Name = 'Docker Desktop'; Description = 'Install Docker Desktop from its exact WinGet ID and verify the daemon; optional hello-world smoke test.'
+            Id = 'system:docker'; Kind = 'docker'; Name = 'Docker Desktop'; Description = 'Install machine-scoped Docker Desktop from its exact WinGet ID.'
             Privilege = 'elevated'; DependsOn = @('system:wsl-runtime'); Priority = 260; SortKey = 'docker'; Action = 'configure'; InventoryStatus = 'Unknown'
-            PackageKey = $null; PackageId = 'Docker.DockerDesktop'; Source = 'winget'; Architecture = 'auto'; Scope = 'auto'; Version = $null; VersionPolicy = 'latest'; ExpectedState = 'installed'; Reboot = 'possible'
-            Recovery = New-WhinsetRecovery -Class 'external' -Instructions = 'Use Windows Settings or Docker Desktop uninstall. WSL distributions and feature state remain separately managed.'
+            PackageKey = $null; PackageId = 'Docker.DockerDesktop'; Source = 'winget'; Architecture = 'auto'; Scope = 'machine'; Version = $null; VersionPolicy = 'latest'; ExpectedState = 'installed'; Reboot = 'possible'
+            Recovery = New-WhinsetRecovery -Class 'external' -Instructions 'Use Windows Settings or Docker Desktop uninstall. WSL distributions and feature state remain separately managed.'
         }
     }
 
+    if (-not $ApplicationsOnly -and $EnableDocker) {
+        $operations += New-WhinsetConfigOperation -Id 'user:docker-verify' -Kind 'docker-user' -Name 'Docker original-user verification' -Description 'Verify the original user daemon and optionally run hello-world; first-run setup may require manual action.' -Privilege 'user' -DependsOn @('system:docker','user:wsl-distribution') -SortKey 'docker-user' -Scope 'user' -Recovery (New-WhinsetRecovery -Class 'external' -Instructions 'Review Docker Desktop user settings and data manually.')
+    }
     if (-not $ApplicationsOnly -and $ConfigureEnvironment) {
         if ($selectedKeys.ContainsKey('git')) {
             $recovery = New-WhinsetRecovery -Class 'manual' -Instructions 'Run git lfs uninstall for the current user if Git LFS hooks are no longer wanted.'
@@ -248,7 +254,7 @@ function Test-WhinsetPlanTrust {
         $byKey = @{}
         foreach ($item in $catalog.Packages) { $byKey[$item.Key.ToLowerInvariant()] = $item }
         $seen = @{}
-        $allowedKinds = @('package','wsl-features','wsl-runtime','docker','config-git-lfs','config-uv','config-conda','config-go','config-rust','config-java-home')
+        $allowedKinds = @('package','wsl-features','wsl-runtime','wsl-distribution','docker','docker-user','config-git-lfs','config-uv','config-conda','config-go','config-rust','config-java-home')
         foreach ($operation in @($Plan.Operations)) {
             if (-not $operation.Id -or $seen.ContainsKey([string]$operation.Id)) { [void]$errors.Add("Duplicate or empty operation ID: $($operation.Id)") }
             $seen[[string]$operation.Id] = $true
@@ -263,7 +269,7 @@ function Test-WhinsetPlanTrust {
                 }
             } elseif ($operation.Kind -eq 'docker') {
                 if ([string]$operation.PackageId -ne 'Docker.DockerDesktop' -or [string]$operation.Source -ne 'winget') { [void]$errors.Add('Docker operation metadata is not trusted.') }
-            } elseif ($operation.Kind -notlike 'config-*' -and $operation.Kind -notlike 'wsl-*') {
+            } elseif ($operation.Kind -notlike 'config-*' -and $operation.Kind -notlike 'wsl-*' -and $operation.Kind -ne 'docker-user') {
                 [void]$errors.Add("Executable operation is not recognized: $($operation.Id)")
             }
         }
@@ -286,5 +292,9 @@ function Get-WhinsetTrustedPlan {
     if ($null -eq $execution) { $execution = [pscustomobject]@{ MaxAttempts=2; InstallTimeoutSeconds=3600 } }
     $rebuilt = New-WhinsetPlan -CatalogPath $trustedCatalog -Profile ([string]$request.Profile) -Package @($request.Packages) -Exclude @($request.Exclude) -Group @($request.Groups) -IncludePersonal:$request.IncludePersonal -SkipStoreApps:$request.SkipStoreApps -Stage ([string]$request.Stage) -ConfigureEnvironment:$request.ConfigureEnvironment -SkipCondaInit:$request.SkipCondaInit -EnableWsl:$request.EnableWsl -EnableDocker:$request.EnableDocker -DockerSmokeTest:$request.DockerSmokeTest -ApplicationsOnly:$request.ApplicationsOnly -MaxAttempts ([int]$execution.MaxAttempts) -InstallTimeoutSeconds ([int]$execution.InstallTimeoutSeconds) -Offline -Environment $stored.Environment
     if ([string]$rebuilt.PlanHash -ne $ExpectedPlanHash -or [string]$stored.PlanHash -ne $ExpectedPlanHash) { throw 'Plan hash verification failed after trusted reconstruction.' }
+    $fields = @('Id','Kind','Privilege','DependsOn','PackageKey','PackageId','Source','Architecture','Scope','Version','VersionPolicy')
+    $storedGraph = @($stored.Operations | Select-Object $fields)
+    $trustedGraph = @($rebuilt.Operations | Select-Object $fields)
+    if ((Get-WhinsetCanonicalJson $storedGraph) -cne (Get-WhinsetCanonicalJson $trustedGraph) -or (@($stored.Order) -join "`n") -cne (@($rebuilt.Order) -join "`n")) { throw 'Serialized operation graph differs from trusted reconstruction.' }
     return $rebuilt
 }
