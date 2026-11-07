@@ -1,0 +1,115 @@
+{
+  "SchemaVersion": 1,
+  "Suite": "real read-only CLI shell invocations",
+  "PowerShellVersion": "7.6.9",
+  "Results": [
+    {
+      "Shell": "PowerShell 5.1",
+      "Test": "json-unicode-path",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 5.1",
+      "Test": "quoted-argument",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 5.1",
+      "Test": "stderr-and-exit",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 5.1",
+      "Test": "offline-plan",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 7",
+      "Test": "json-unicode-path",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 7",
+      "Test": "quoted-argument",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 7",
+      "Test": "stderr-and-exit",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "PowerShell 7",
+      "Test": "offline-plan",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "CMD launcher",
+      "Test": "json-unicode-path",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "CMD launcher",
+      "Test": "quoted-argument",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "CMD launcher",
+      "Test": "stderr-and-exit",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "CMD launcher",
+      "Test": "offline-plan",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "Git Bash adapter",
+      "Test": "json-unicode-path",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "Git Bash adapter",
+      "Test": "quoted-argument",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "Git Bash adapter",
+      "Test": "stderr-and-exit",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "Git Bash adapter",
+      "Test": "offline-plan",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Shell": "Nushell adapter",
+      "Test": "availability",
+      "Status": "NOT RUN",
+      "Detail": "Executable unavailable"
+    },
+    {
+      "Shell": "module",
+      "Test": "exports and private worker",
+      "Status": "PASS",
+      "Detail": ""
+    }
+  ]
+}

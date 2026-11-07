@@ -1,0 +1,102 @@
+{
+  "SchemaVersion": 1,
+  "Suite": "deterministic hardening; simulated UAC and operations",
+  "PowerShellVersion": "7.6.9",
+  "Results": [
+    {
+      "Name": "SID policy accepts identical SIDs and rejects different-user credentials",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Native cancellation uses ERROR_CANCELLED 1223 independent of language",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Private state directory and inherited file ACLs reject foreign writers",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Worker grant simulation executes once and rejects replay",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Worker rejects wrong nonce without result writes",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Worker rejects stale and future requests",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Worker rejects alternate-user request and mismatched state",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Trusted reconstruction rejects modified executable plan and catalog hash",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "WSL and Docker graphs isolate machine and original-user operations",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Interrupted state replacement preserves old valid JSON and backup",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Partial elevated phase resumes pending work and preserves successes",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Interrupted installer is rechecked before another install attempt",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Repeated apply package recheck detects removed package after success",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: grant",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: deny",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: launch-failure",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: crash",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: missing",
+      "Status": "PASS",
+      "Detail": ""
+    },
+    {
+      "Name": "Elevation transport simulation: wrong-nonce",
+      "Status": "PASS",
+      "Detail": ""
+    }
+  ]
+}

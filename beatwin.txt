@@ -1,5 +1,5 @@
 # ============================================================================
-# Whinset v2.0.0-rc.1 - copy-and-paste bootstrap
+# Whinset v2.0.0-rc.2 - copy-and-paste bootstrap
 # ============================================================================
 # BEFORE DOWNLOAD - what this can change:
 # - Installs the packages selected by the profile using exact WinGet Source:Id
@@ -9,6 +9,8 @@
 # - Administrator authorization uses normal Windows UAC. There is no bypass.
 # - Every elevated operation is grouped into one elevated worker when the plan
 #   requires administrator access. Declining UAC stops the elevated phase.
+# - Different-user UAC credentials are unsupported. WSL distribution registration
+#   and Docker daemon checks stay in the intended original user's process.
 # - Logs and state are preserved under %LOCALAPPDATA%\Whinset\v2. The temporary
 #   download/extract folder is removed after the command finishes.
 # - No automatic rollback is claimed. Review the published plan, package licenses
@@ -16,9 +18,9 @@
 # - Repository: https://github.com/styayur/whinset
 # ============================================================================
 
-$WhinsetVersion = 'v2.0.0-rc.1'
-$WhinsetArchiveSha256 = 'b29adc9e7ce20822c0040d8c38d5b5ed080f865ea41fb59f58b1967d84f4eae7'
-$WhinsetAssetUrl = 'https://github.com/styayur/whinset/releases/download/v2.0.0-rc.1/Whinset-v2.0.0-rc.1.zip'
+$WhinsetVersion = 'v2.0.0-rc.2'
+$WhinsetArchiveSha256 = '175465032c976550a2fa8a313b915fe61eaf05ddfaa13f68c20c3b6c2bd5fa97'
+$WhinsetAssetUrl = 'https://github.com/styayur/whinset/releases/download/v2.0.0-rc.2/Whinset-v2.0.0-rc.2.zip'
 
 # Default is safe: download, verify and show a plan. After reviewing it, change
 # this value to 'apply' and paste the block again to execute the same request.

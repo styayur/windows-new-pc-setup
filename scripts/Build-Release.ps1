@@ -61,12 +61,32 @@ try {
     if ($VerifyBootstrap -and -not $integrity.Ok) { throw "Bootstrap verification failed: $($integrity.Error)" }
     if ($integrity.Ok -and $integrity.Manifest.Version -ne $Version) { throw "beatwin.txt pins $($integrity.Manifest.Version), not $Version." }
     $bootstrapHash = $null
-    if (Test-Path -LiteralPath $bootstrapPath) { $bootstrapHash = (Get-FileHash -LiteralPath $bootstrapPath -Algorithm SHA256).Hash.ToLowerInvariant() }
+    $bootstrapOutput = $null
+    if (Test-Path -LiteralPath $bootstrapPath) {
+        $bootstrapOutput = Join-Path $OutputDirectory 'beatwin.txt'
+        $text = [IO.File]::ReadAllText($bootstrapPath).Replace("`r`n","`n").Replace("`r","`n")
+        Write-WhinsetTextFile -Path $bootstrapOutput -Text $text
+        $bootstrapHash = Get-WhinsetHashFile $bootstrapOutput
+    }
     $sumsPath = Join-Path $OutputDirectory 'SHA256SUMS.txt'
     $lines = @("$archiveHash  $archiveName")
     if ($bootstrapHash) { $lines += "$bootstrapHash  beatwin.txt" }
-    Write-WhinsetTextFile -Path $sumsPath -Text (($lines -join [Environment]::NewLine) + [Environment]::NewLine)
-    return [pscustomobject][ordered]@{ Version=$Version; ArchivePath=$archivePath; ArchiveSha256=$archiveHash; BootstrapPath=$(if (Test-Path -LiteralPath $bootstrapPath) { $bootstrapPath } else { $null }); BootstrapSha256=$bootstrapHash; SumsPath=$sumsPath; BootstrapIntegrity=$integrity }
+    $acceptancePath = $null
+    $acceptanceSource = Join-Path $root "docs/acceptance/windows-$Version.json"
+    if (Test-Path -LiteralPath $acceptanceSource) {
+        $matrix = Read-WhinsetJsonFile -Path $acceptanceSource
+        if ($matrix.Release -ne $Version -or $matrix.StableEligible -ne $false) { throw 'Acceptance matrix release policy is invalid.' }
+        foreach ($entry in $matrix.Checks) {
+            if ($entry.Status -notin @('PASS','FAIL','NOT RUN','BLOCKED','NOT APPLICABLE')) { throw "Invalid acceptance status: $($entry.Id)" }
+            if ($entry.Status -eq 'PASS' -and -not $entry.Evidence) { throw "PASS requires evidence: $($entry.Id)" }
+        }
+        $acceptancePath = Join-Path $OutputDirectory 'acceptance-matrix.json'
+        $text = [IO.File]::ReadAllText($acceptanceSource).Replace("`r`n","`n").Replace("`r","`n")
+        Write-WhinsetTextFile -Path $acceptancePath -Text $text
+        $lines += "$(Get-WhinsetHashFile $acceptancePath)  acceptance-matrix.json"
+    }
+    Write-WhinsetTextFile -Path $sumsPath -Text (($lines -join "`n") + "`n")
+    return [pscustomobject][ordered]@{ Version=$Version; ArchivePath=$archivePath; ArchiveSha256=$archiveHash; BootstrapPath=$bootstrapOutput; BootstrapSha256=$bootstrapHash; SumsPath=$sumsPath; AcceptancePath=$acceptancePath; BootstrapIntegrity=$integrity }
 } finally {
     if (Test-Path -LiteralPath $stage) {
         $resolvedStage = [IO.Path]::GetFullPath($stage)

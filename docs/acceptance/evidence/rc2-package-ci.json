@@ -1,0 +1,61 @@
+{
+  "SchemaVersion": 1,
+  "Suite": "real disposable package component integration",
+  "Environment": {
+    "Caption": "Microsoft Windows Server 2025 Datacenter",
+    "OsVersion": "10.0.26100",
+    "BuildNumber": 26100,
+    "ProductType": 3,
+    "IsWindows11": false,
+    "PowerShellVersion": "7.6.9",
+    "PowerShellEdition": "Core",
+    "Is64BitProcess": true,
+    "Architecture": "x64",
+    "IsAdministrator": true,
+    "ComputerName": "runnervmm7ud1",
+    "UserSid": "S-1-5-21-3289802278-1561746829-1498425070-500",
+    "UserProfile": "C:\\Users\\runneradmin",
+    "LocalAppData": "C:\\Users\\runneradmin\\AppData\\Local",
+    "Temp": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp",
+    "WingetAvailable": true,
+    "WingetVersion": "1.11.510",
+    "WingetVersionOk": true,
+    "PendingReboot": [],
+    "Blockers": [
+      "Whinset provisioning requires Windows 11 client build 22000 or later."
+    ],
+    "Warnings": [],
+    "BootId": "134384599020727300"
+  },
+  "Package": {
+    "Key": "Notepad3",
+    "Id": "Rizonesoft.Notepad3",
+    "Source": "winget",
+    "Architecture": "auto",
+    "Scope": "auto",
+    "Version": null,
+    "VersionPolicy": "latest"
+  },
+  "First": {
+    "Status": "Succeeded",
+    "Detail": "Installed and verified through exact WinGet identity.",
+    "Error": "",
+    "ExitCode": 0,
+    "RebootRequired": false,
+    "StopAll": false,
+    "RecoveryData": null
+  },
+  "Repeated": {
+    "Status": "AlreadyInstalled",
+    "Detail": "Verified through exact WinGet identity before installation.",
+    "Error": "",
+    "ExitCode": 0,
+    "RebootRequired": false,
+    "StopAll": false,
+    "RecoveryData": null
+  },
+  "InteractiveUac": "NOT RUN",
+  "Reboot": "NOT RUN",
+  "Windows11CliAcceptance": "NOT APPLICABLE",
+  "RunUrl": "https://github.com/styayur/whinset/actions/runs/42263020010"
+}

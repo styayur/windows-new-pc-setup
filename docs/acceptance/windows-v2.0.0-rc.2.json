@@ -1,0 +1,375 @@
+{
+  "SchemaVersion": 1,
+  "Release": "v2.0.0-rc.2",
+  "Date": "2026-11-07",
+  "Decision": "RC.2 only; Stable prohibited",
+  "StableEligible": false,
+  "AllowedStatuses": [
+    "PASS",
+    "FAIL",
+    "NOT RUN",
+    "BLOCKED",
+    "NOT APPLICABLE"
+  ],
+  "RuntimeEvidenceRevision": "3d2af4ca538559d7023f8ed16a2dce17f614e9a2",
+  "RoadmapIssue": "https://github.com/styayur/whinset/issues/8",
+  "Checks": [
+    {
+      "Id": "powershell-5.1-regression",
+      "Status": "PASS",
+      "Scope": "hosted Windows deterministic tests",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "powershell-7-regression",
+      "Status": "PASS",
+      "Scope": "hosted Windows deterministic tests",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "sid-identical",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "sid-different",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "uac-granted",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "uac-denied",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "launch-failure",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "worker-crash",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "missing-result",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "wrong-nonce",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "stale-request",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "replayed-request",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "modified-plan",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "modified-catalog",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "mismatched-state",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "state-owner-acl",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "interrupted-package",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "partial-elevated-phase",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "interrupted-state-write",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "successful-package-recheck",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "inconsistent-state-rejection",
+      "Status": "PASS",
+      "Scope": "deterministic regression; UAC and operations simulated; ACL file I/O real",
+      "Evidence": "evidence/rc2-hardening-ps51.json; evidence/rc2-hardening-ps7.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "repeated-apply",
+      "Status": "PASS",
+      "Scope": "deterministic orchestration regression in Run-WhinsetTests.ps1",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "restart-required-operation",
+      "Status": "PASS",
+      "Scope": "deterministic orchestration regression in Run-WhinsetTests.ps1",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "boot-id-change",
+      "Status": "PASS",
+      "Scope": "deterministic orchestration regression in Run-WhinsetTests.ps1",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "concurrent-apply-rejection",
+      "Status": "PASS",
+      "Scope": "deterministic orchestration regression in Run-WhinsetTests.ps1",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "powershell-5.1-shell",
+      "Status": "PASS",
+      "Scope": "real read-only CLI; Unicode paths, spaces, quotes, JSON, stderr, exits 0/2",
+      "Evidence": "evidence/rc2-shells-ci.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "powershell-7-shell",
+      "Status": "PASS",
+      "Scope": "real read-only CLI; Unicode paths, spaces, quotes, JSON, stderr, exits 0/2",
+      "Evidence": "evidence/rc2-shells-ci.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "cmd-shell",
+      "Status": "PASS",
+      "Scope": "real read-only CLI; Unicode paths, spaces, quotes, JSON, stderr, exits 0/2",
+      "Evidence": "evidence/rc2-shells-ci.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "git-bash-shell",
+      "Status": "PASS",
+      "Scope": "real read-only CLI; Unicode paths, spaces, quotes, JSON, stderr, exits 0/2",
+      "Evidence": "evidence/rc2-shells-ci.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "nushell-shell-local",
+      "Status": "PASS",
+      "Scope": "real read-only CLI on developer host; Nushell 0.116.1",
+      "Evidence": "evidence/rc2-shells-local.json",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "nushell-shell-hosted",
+      "Status": "NOT RUN",
+      "Scope": "hosted CI",
+      "Evidence": "Nushell executable unavailable; experimental adapter",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "fresh-package-and-repeat",
+      "Status": "PASS",
+      "Scope": "actual Notepad3 package component on disposable Windows hosted runner",
+      "Evidence": "evidence/rc2-package-ci.json; https://github.com/styayur/whinset/actions/runs/42263020010",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "static-analysis",
+      "Status": "PASS",
+      "Scope": "hosted CI at runtime source revision 3d2af4ca538559d7023f8ed16a2dce17f614e9a2",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "catalog-schema",
+      "Status": "PASS",
+      "Scope": "hosted CI at runtime source revision 3d2af4ca538559d7023f8ed16a2dce17f614e9a2",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "module-import-exports",
+      "Status": "PASS",
+      "Scope": "hosted CI at runtime source revision 3d2af4ca538559d7023f8ed16a2dce17f614e9a2",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "release-double-build-sha256",
+      "Status": "PASS",
+      "Scope": "hosted CI at runtime source revision 3d2af4ca538559d7023f8ed16a2dce17f614e9a2",
+      "Evidence": "https://github.com/styayur/whinset/actions/runs/42263019789",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "interactive-windows11-environment",
+      "Status": "BLOCKED",
+      "Scope": "independent real-machine acceptance",
+      "Evidence": "No disposable interactive Windows 11 VM/UAC/reboot session is connected.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-uac-approve",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-uac-deny",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-different-user-uac-rejection",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-user-profile-isolation",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "windows11-clean-multi-package-apply",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-installer-interruption-timeout-recovery",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-restart-3010-and-continuation",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-wsl-features-and-reboot",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-wsl-original-user-registration-first-run",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-docker-machine-install-original-user-first-run-hello-world",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-bootstrap-download-apply",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "real-vendor-uninstall-manual-recovery",
+      "Status": "NOT RUN",
+      "Scope": "independent interactive Windows 11 VM",
+      "Evidence": "Record OS build, both SIDs, commands, exit codes, logs, boot IDs, profile artifacts and reviewer sign-off in tests/VM-CHECKLIST.md.",
+      "RequiredForStable": true
+    },
+    {
+      "Id": "automatic-rollback",
+      "Status": "NOT APPLICABLE",
+      "Scope": "product scope",
+      "Evidence": "No automatic rollback is implemented or claimed.",
+      "RequiredForStable": false
+    },
+    {
+      "Id": "hosted-runner-proves-interactive-uac",
+      "Status": "NOT APPLICABLE",
+      "Scope": "evidence scope",
+      "Evidence": "Hosted package component execution cannot certify interactive UAC or reboot.",
+      "RequiredForStable": false
+    }
+  ]
+}

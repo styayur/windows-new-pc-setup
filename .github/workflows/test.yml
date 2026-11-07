@@ -82,9 +82,13 @@ jobs:
       - name: Build twice and verify SHA-256 manifest
         shell: pwsh
         run: |
-          $a = ./scripts/Build-Release.ps1 -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-a"
-          $b = ./scripts/Build-Release.ps1 -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-b"
+          $verify = Test-Path ./docs/acceptance/windows-v2.0.0-rc.2.json
+          $a = ./scripts/Build-Release.ps1 -VerifyBootstrap:$verify -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-a"
+          $b = ./scripts/Build-Release.ps1 -VerifyBootstrap:$verify -Version v2.0.0-rc.2 -OutputDirectory "$env:RUNNER_TEMP/release-b"
           if ($a.ArchiveSha256 -cne $b.ArchiveSha256) { throw 'Release bytes differ between builds.' }
+          foreach ($asset in @($a.BootstrapPath,$a.AcceptancePath,$a.SumsPath)) {
+            if ($asset -and [IO.File]::ReadAllText($asset).Contains("`r")) { throw "Detached release text must use LF: $asset" }
+          }
           foreach ($line in Get-Content $a.SumsPath) {
             if ($line -notmatch '^([a-f0-9]{64})  (.+)$') { throw 'Malformed checksum entry.' }
             $expected = $Matches[1]; $name = $Matches[2]

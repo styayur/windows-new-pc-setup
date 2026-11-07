@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Existing tag to package, for example v2.0.0-rc.1
+        description: Existing prerelease tag to package, for example v2.0.0-rc.2
         required: true
         type: string
 
@@ -28,11 +28,17 @@ jobs:
       - name: Resolve and validate release version
         id: meta
         shell: pwsh
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          $version = '${{ inputs.version }}'
-          if (-not $version) { $version = '${{ github.ref_name }}' }
+          $version = $env:VERSION_INPUT
+          if (-not $version) { $version = $env:REF_NAME }
           if ($version -notmatch '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') { throw "Tag must use vX.Y.Z or vX.Y.Z-prerelease: $version" }
+          if ($version -notmatch '-') { throw 'Stable publication is disabled pending independent real Windows acceptance and a reviewed release-policy change.' }
+          if ($version -eq 'v2.0.0-rc.1') { throw 'Published RC.1 is immutable; do not rebuild or replace its assets.' }
           git describe --exact-match --tags HEAD
+          if ($LASTEXITCODE) { throw 'Release must use an existing exact tag.' }
           "version=$version" >> $env:GITHUB_OUTPUT
           if ($version -match '-') { "prerelease=true" >> $env:GITHUB_OUTPUT } else { "prerelease=false" >> $env:GITHUB_OUTPUT }
           if (-not (Test-Path "docs/releases/$version.md")) { throw "Release notes missing: docs/releases/$version.md" }
@@ -44,12 +50,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./tests/Run-WhinsetTests.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/Run-HardeningTests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run PowerShell 7 tests
         shell: pwsh
         run: |
           ./tests/Run-Tests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./tests/Run-WhinsetTests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/Run-HardeningTests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/Run-ShellTests.ps1 -RequireGitBash
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build deterministic release and verify beatwin checksum
         id: build
@@ -58,11 +72,14 @@ jobs:
           $out = Join-Path $env:RUNNER_TEMP 'whinset-release'
           $version = '${{ steps.meta.outputs.version }}'
           $result = ./scripts/Build-Release.ps1 -Version $version -OutputDirectory $out -VerifyBootstrap
+          $again = ./scripts/Build-Release.ps1 -Version $version -OutputDirectory "$out-again" -VerifyBootstrap
+          if ($result.ArchiveSha256 -cne $again.ArchiveSha256) { throw 'Release is not reproducible.' }
           "archive_path=$($result.ArchivePath)" >> $env:GITHUB_OUTPUT
           "archive_name=$(Split-Path $result.ArchivePath -Leaf)" >> $env:GITHUB_OUTPUT
           "bootstrap_path=$($result.BootstrapPath)" >> $env:GITHUB_OUTPUT
           "sums_path=$($result.SumsPath)" >> $env:GITHUB_OUTPUT
           "archive_sha256=$($result.ArchiveSha256)" >> $env:GITHUB_OUTPUT
+          "acceptance_path=$($result.AcceptancePath)" >> $env:GITHUB_OUTPUT
 
       - name: Upload release payload artifact
         uses: actions/upload-artifact@v7
@@ -72,18 +89,20 @@ jobs:
             ${{ steps.build.outputs.archive_path }}
             ${{ steps.build.outputs.bootstrap_path }}
             ${{ steps.build.outputs.sums_path }}
+            ${{ steps.build.outputs.acceptance_path }}
           if-no-files-found: error
 
-      - name: Publish GitHub release
+      - name: Prepare draft prerelease
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.version }}
           name: Whinset ${{ steps.meta.outputs.version }}
           body_path: docs/releases/${{ steps.meta.outputs.version }}.md
-          draft: false
-          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
+          draft: true
+          prerelease: true
           fail_on_unmatched_files: true
           files: |
             ${{ steps.build.outputs.archive_path }}
             ${{ steps.build.outputs.bootstrap_path }}
             ${{ steps.build.outputs.sums_path }}
+            ${{ steps.build.outputs.acceptance_path }}

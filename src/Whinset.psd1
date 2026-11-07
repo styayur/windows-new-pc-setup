@@ -14,7 +14,7 @@
     AliasesToExport = @('whinset')
     PrivateData = @{
         PSData = @{
-            Prerelease = 'rc.1'
+            Prerelease = 'rc.2'
             Tags = @('Windows','Provisioning','WinGet','PowerShell','UAC')
             LicenseUri = 'https://github.com/styayur/whinset/blob/main/LICENSE'
             ProjectUri = 'https://github.com/styayur/whinset'

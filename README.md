@@ -3,32 +3,33 @@
 **Deterministic Windows 11 setup with explicit package identities, a reviewable DAG plan, and one necessary UAC boundary.**
 
 [![PowerShell regression tests](https://github.com/styayur/whinset/actions/workflows/test.yml/badge.svg)](https://github.com/styayur/whinset/actions/workflows/test.yml)
-[Security model](docs/security-model.md) · [CLI reference](docs/cli.md) · [Package resolution](docs/package-resolution.md) · [Recovery](docs/recovery.md) · [中文说明](docs/README.zh-CN.md)
+[Security model](docs/security-model.md) · [CLI reference](docs/cli.md) · [Shell compatibility](docs/shell-compatibility.md) · [Package resolution](docs/package-resolution.md) · [Recovery](docs/recovery.md) · [中文说明](docs/README.zh-CN.md)
 
-Current source: **v2.0.0-rc.1**. This is a release candidate because real Windows 11 VM acceptance of UAC, privileged installers, Windows features and reboot continuation is not yet certified.
+Current source: **v2.0.0-rc.2**. This is a release candidate because real Windows 11 VM acceptance of UAC, privileged installers, Windows features and reboot continuation is not yet certified.
 
 ## Before download: privilege and system-change disclosure
 
 Read this before running `beatwin.txt` or changing `WhinsetMode` from `plan` to `apply`.
 
-- **Administrator operations may include:** installing machine-scoped WinGet/MSStore packages, enabling `VirtualMachinePlatform` and Windows Subsystem for Linux, updating/installing WSL 2 and Ubuntu, installing Docker Desktop, and setting machine `JAVA_HOME`/`PATH`.
-- **User operations may include:** Git LFS hooks, `UV_PYTHON_PREFERENCE`, Conda PowerShell initialization and `auto_activate_base=false`, Go user configuration, Rust's `~/.cargo/bin`, and user `PATH` changes.
+- **Administrator operations may include:** installing machine-scoped WinGet/MSStore packages, enabling `VirtualMachinePlatform` and Windows Subsystem for Linux, updating the machine WSL runtime, installing Docker Desktop, and setting machine `JAVA_HOME`/`PATH`.
+- **User operations may include:** WSL Ubuntu registration, Docker daemon/hello-world checks, Git LFS hooks, `UV_PYTHON_PREFERENCE`, Conda PowerShell initialization and `auto_activate_base=false`, Go user configuration, Rust's `~/.cargo/bin`, and user `PATH` changes.
 - Installers can change files, services, startup entries, PATH, registry values and other machine state beyond Whinset's own operation records.
 - UAC is used through normal Windows elevation. Whinset does not disable UAC, collect credentials, use hidden elevation tricks, or pass arbitrary PowerShell code to the elevated process.
 - A non-elevated `apply` requests **one UAC authorization** when elevated work remains. All elevated operations then run in one validated worker.
 - If UAC is declined, the elevated phase stops with exit code **4**. The non-elevated planning/state files remain intact; no privileged installer was started by that phase.
+- Different-user UAC credentials are unsupported and rejected before elevated operations. User work remains in the intended original account.
 - Logs and structured state are stored under `%LOCALAPPDATA%\Whinset\v2`.
 - Packages can normally be removed with an exact WinGet uninstall, but some installer changes remain manual. Windows features, WSL distributions, Docker first-run state, registry edits and vendor services must be reviewed individually. **Whinset does not claim automatic rollback.**
 - There is no promise that uninstalling a package restores every PATH, service, registry or application setting that its installer changed.
 - Restart may be required. Whinset never restarts Windows automatically.
 
-The same disclosure is included in the `v2.0.0-rc.1` release notes and in `beatwin.txt` before the download step.
+The same disclosure is included in the `v2.0.0-rc.2` release notes and in `beatwin.txt` before the download step.
 
 ## Quick start with `beatwin.txt`
 
 `beatwin.txt` is the human-readable copy-and-paste bootstrap. It defaults to safe plan mode:
 
-1. Download the pinned `v2.0.0-rc.1` release archive.
+1. Download the pinned `v2.0.0-rc.2` release archive.
 2. Verify its fixed SHA-256 value before extraction.
 3. Extract under the current user's temporary directory.
 4. Run `plan` without Whinset state creation.
@@ -188,7 +189,7 @@ Legacy `%LOCALAPPDATA%\SetupNewPC\v2` state is discovered read-only by `whinset 
 - WSL/Docker behavior remains vendor- and policy-dependent.
 - Custom catalogs are **plan-only** in this release candidate. Apply uses the installed built-in catalog. The legacy `SetupNewPC_Optimized.ps1` remains available for reviewed custom manifests.
 - Legacy per-package confirmation remains available only through `Install-Applications.WithConfirmation.ps1`; the canonical Whinset apply flow intentionally avoids redundant per-operation prompts.
-- Mocked CI tests do not certify every installer. Clean Windows 11 VM UAC/reboot acceptance is still pending for rc.1. See the [Windows acceptance report](docs/acceptance/windows-v2.0.0-rc.1.md).
+- Mocked CI tests do not certify every installer. Clean Windows 11 VM UAC/reboot acceptance is still pending for rc.2. See the [Windows acceptance report](docs/acceptance/windows-v2.0.0-rc.2.md).
 
 ## Compatibility
 
@@ -209,9 +210,9 @@ pwsh -NoProfile -File .\tests\Run-Tests.ps1
 pwsh -NoProfile -File .\tests\Run-WhinsetTests.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-Tests.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-WhinsetTests.ps1
-pwsh -NoProfile -File .\scripts\Build-Release.ps1 -Version v2.0.0-rc.1 -OutputDirectory $env:TEMP\whinset-release -VerifyBootstrap
+pwsh -NoProfile -File .\scripts\Build-Release.ps1 -Version v2.0.0-rc.2 -OutputDirectory $env:TEMP\whinset-release -VerifyBootstrap
 ```
 
-The release workflow rebuilds the archive deterministically, verifies the pinned `beatwin.txt` checksum, uploads `Whinset-<version>.zip`, `beatwin.txt` and `SHA256SUMS.txt`, and publishes `v2.0.0-rc.1` as a prerelease.
+The release workflow rebuilds the archive deterministically, verifies the pinned `beatwin.txt` checksum, uploads `Whinset-<version>.zip`, `beatwin.txt` and `SHA256SUMS.txt`, and publishes `v2.0.0-rc.2` as a prerelease.
 
 MIT licensed. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).

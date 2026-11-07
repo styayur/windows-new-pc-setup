@@ -1,4 +1,4 @@
-$script:WhinsetVersion = '2.0.0-rc.1'
+$script:WhinsetVersion = '2.0.0-rc.2'
 $script:WhinsetSchemaVersion = 2
 $script:WhinsetStateSchemaVersion = 1
 $script:WhinsetAllowedCommands = @('help','plan','apply','status','doctor','resolve','recover','install-cli','version')
